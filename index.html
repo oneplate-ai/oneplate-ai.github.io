@@ -23,7 +23,10 @@
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
         <span>AI 한 접시</span>
       </a>
-      <nav aria-label="주요 메뉴">
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+        메뉴
+      </button>
+      <nav id="primary-nav" aria-label="주요 메뉴">
         <a href="#latest">최신 글</a>
         <a href="#bite">AI 한입</a>
         <a href="#weekly">주간 AI 한 접시</a>
@@ -127,5 +130,22 @@
       </a>
       <p>AI를 함께 알아가는 기록.</p>
     </footer>
+    <script>
+      const header = document.querySelector('.site-header');
+      const menuToggle = document.querySelector('.menu-toggle');
+      const primaryNav = document.querySelector('#primary-nav');
+
+      menuToggle.addEventListener('click', () => {
+        const isOpen = header.classList.toggle('nav-open');
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+      });
+
+      primaryNav.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+          header.classList.remove('nav-open');
+          menuToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+    </script>
   </body>
 </html>
