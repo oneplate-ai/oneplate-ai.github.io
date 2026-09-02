@@ -34,15 +34,10 @@ a { color: inherit; }
   justify-content: space-between;
   border-bottom: 1px solid var(--line);
 }
-.brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font: 600 20px/1 var(--display); letter-spacing: -0.05em; }
-.brand-mark { width: 34px; height: 34px; border: 1.5px solid var(--green); border-radius: 50%; display: grid; place-content: center; gap: 3px; padding: 0 8px; }
-.brand-mark i { display: block; height: 1.5px; width: 16px; border-radius: 2px; background: var(--green); }
-.brand-mark i:nth-child(2) { width: 12px; }
-.brand-mark i:nth-child(3) { width: 14px; }
-.brand-mark.small { width: 26px; height: 26px; padding: 0 6px; gap: 2px; }
-.brand-mark.small i { width: 12px; height: 1px; }
-.brand-mark.small i:nth-child(2) { width: 9px; }
-.brand-mark.small i:nth-child(3) { width: 10px; }
+    .brand-logo { display: block; object-fit: contain; mix-blend-mode: multiply; }
+    .brand-logo.horizontal { width: 170px; height: 58px; }
+    .brand-logo.symbol { width: 42px; height: 42px; }
+    .hero-logo { display: block; width: min(280px, 68vw); height: auto; margin-bottom: 42px; mix-blend-mode: multiply; }
 nav { display: flex; gap: 22px; font-size: 13px; color: var(--muted); }
 nav a { text-decoration: none; }
 nav a:hover { color: var(--green); }
@@ -104,6 +99,7 @@ h3 { margin-bottom: 9px; font-size: 19px; letter-spacing: -0.05em; }
 @media (max-width: 720px) {
   .wrap, .site-header { width: min(100% - 32px, 1120px); }
   .site-header { min-height: 72px; }
+  .brand-logo.horizontal { width: 145px; height: 50px; }
   .site-header { position: relative; flex-wrap: wrap; }
   .menu-toggle { display: inline-block; cursor: pointer; }
   nav { display: none; width: 100%; padding: 14px 0 18px; flex-direction: column; gap: 0; border-top: 1px solid var(--line); }
