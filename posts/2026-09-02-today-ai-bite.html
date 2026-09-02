@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AI 한 접시의 2026년 9월 2일 AI 소식 세 가지">
+  <title>오늘 AI 한입 — 2026년 9월 2일 | AI 한 접시</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .draft-wrap { width: min(760px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0 100px; }
+    .draft-label { display: inline-block; margin-bottom: 18px; padding: 5px 10px; border-radius: 99px; color: var(--accent); background: #f6e3dc; font-size: 12px; font-weight: 700; }
+    article h1 { margin-bottom: 18px; font-size: clamp(32px, 5vw, 52px); }
+    article h2 { margin: 56px 0 16px; font-size: clamp(24px, 3vw, 32px); }
+    article h3 { margin: 28px 0 8px; color: var(--green); font-size: 16px; }
+    article p { color: #3f493f; }
+    article blockquote { margin: 24px 0 36px; padding: 18px 20px; border-left: 3px solid var(--accent); background: #fbf8f1; color: var(--muted); }
+    article ul { padding-left: 22px; color: #3f493f; }
+    article li { margin: 5px 0; }
+    .sources { padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
+    .sources li { overflow-wrap: anywhere; }
+    .back { display: inline-block; margin-bottom: 34px; color: var(--green); font-size: 14px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main class="draft-wrap">
+    <a class="back" href="../index.html">← AI 한 접시 홈</a>
+    <span class="draft-label">오늘 AI 한입 · 2026년 9월 2일</span>
+    <article>
+      <h1>오늘 AI 한입 — 2026년 9월 2일</h1>
+      <blockquote>오늘은 AI가 <strong>업무 데이터와 연결되고</strong>, <strong>여러 단계를 대신 처리하며</strong>, <strong>브라우저 안에서도 실행되는 방향</strong>으로 넓어지고 있다는 소식을 간단히 살펴봅니다.</blockquote>
+
+      <h2>1. ChatGPT가 의료 기록과 연결됩니다</h2>
+      <p>OpenAI가 의료기관용 ChatGPT에 Epic 전자의무기록(EHR)을 연결하는 기능을 발표했습니다. EHR은 병원에서 진료 기록을 관리하는 시스템입니다. ClinicalTrials.gov, PubMed 등 공식 의료 자료를 찾아볼 수 있는 기능도 함께 소개했습니다.<sup>[1]</sup></p>
+      <p>핵심은 AI가 일반적인 질문에 답하는 것을 넘어, <strong>허가받은 업무 자료를 근거로 답할 수 있게 된다는 점</strong>입니다. 다만 의료기관 관리자 설정과 자격 확인이 필요하고, 개인 계정에서 자유롭게 쓸 수 있는 기능은 아닙니다.<sup>[1]</sup></p>
+      <ul><li><strong>분류:</strong> 업무·의료 데이터</li><li><strong>접근:</strong> 의료기관 중심, 이용 자격 확인 필요</li><li><strong>한 줄:</strong> AI를 업무에 연결할 때는 성능만큼 권한과 개인정보 관리가 중요합니다.</li></ul>
+
+      <h2>2. GitHub Copilot에 장시간 작업용 Claude가 추가됩니다</h2>
+      <p>GitHub가 GitHub Copilot에서 Claude Fable 5.1을 사용할 수 있다고 발표했습니다. GitHub는 이 모델이 긴 코딩 작업과 여러 단계를 거치는 업무를 목표로 한다고 설명합니다.<sup>[2]</sup></p>
+      <p>이런 방식의 AI를 <strong>에이전트</strong>라고 부릅니다. 에이전트는 한 번 답하고 끝나는 대신, 코드를 살펴보고 수정한 뒤 확인하는 작업을 이어서 수행합니다.<sup>[2]</sup></p>
+      <p>Business와 Enterprise 조직은 관리자가 먼저 사용을 허용해야 합니다. 또한 이 모델은 안전 기능을 위해 프롬프트와 결과를 기본적으로 보존하므로, 민감한 코드를 다룰 때는 데이터 정책을 먼저 확인해야 합니다.<sup>[2]</sup></p>
+      <ul><li><strong>분류:</strong> 코딩·업무 자동화</li><li><strong>접근:</strong> Copilot Pro+, Max, Business, Enterprise / 조직 정책 필요</li><li><strong>한 줄:</strong> AI에게 긴 작업을 맡길수록 성능뿐 아니라 데이터 보존 조건도 확인해야 합니다.</li></ul>
+
+      <h2>3. Hugging Face가 브라우저 AI용 부품 207개를 공개했습니다</h2>
+      <p>Hugging Face가 브라우저에서 AI 연산을 실행하는 WebGPU 커널 207개와 JavaScript 라이브러리를 공개했습니다. 커널은 AI 모델 전체가 아니라, 모델이 계산할 때 사용하는 작은 실행 부품입니다.<sup>[3]</sup></p>
+      <p>개발자는 이 부품을 브라우저에서 불러와 사용할 수 있고, 자신의 컴퓨터에서 속도와 정확성을 시험할 수 있습니다. 공개 라이선스는 Apache-2.0입니다.<sup>[3]</sup></p>
+      <p>일반 사용자가 바로 설치해 쓰는 앱은 아니지만, 앞으로 AI 모델을 서버에 보내지 않고 브라우저나 개인 컴퓨터에서 실행하는 기반이 될 수 있습니다. 실제 속도는 브라우저와 GPU에 따라 달라집니다.<sup>[3]</sup></p>
+      <ul><li><strong>분류:</strong> 오픈소스·브라우저 AI</li><li><strong>접근:</strong> 개발자용 오픈소스 / Apache-2.0</li><li><strong>한 줄:</strong> AI가 꼭 거대한 서버에서만 실행될 필요는 없다는 흐름을 보여줍니다.</li></ul>
+
+      <h2>오늘의 한 줄 정리</h2>
+      <p>오늘의 공통점은 AI 기능이 좋아졌다는 사실만이 아닙니다. <strong>어떤 데이터에 접근하는지, 얼마나 오래 작업하는지, 어디에서 실행되는지</strong>까지 함께 살펴봐야 하는 단계로 들어섰다는 점입니다.<sup>[1]</sup></p>
+
+      <h2>검증 메모</h2>
+      <p>세 항목은 2026년 9월 1일 발표된 공식 자료를 기준으로 정리했습니다. 제품의 실제 이용 가능 범위와 정책은 공개 전에 다시 확인해야 합니다.<sup>[1]</sup></p>
+
+      <h2>Sources</h2>
+      <ol class="sources">
+        <li><a href="https://openai.com/index/chatgpt-connects-health-records-and-healthcare-sources/">Healthcare organizations can now connect EHR and additional industry data to ChatGPT — OpenAI</a></li>
+        <li><a href="https://github.blog/changelog/2026-09-01-claude-fable-5-1-generally-available-in-github-copilot">Claude Fable 5.1 is generally available in GitHub Copilot — GitHub Changelog</a></li>
+        <li><a href="https://huggingface.co/blog/webgpu-kernels">Introducing @huggingface/kernels: 200+ WebGPU Kernels for Local AI — Hugging Face</a></li>
+      </ol>
+    </article>
+  </main>
+</body>
+</html>

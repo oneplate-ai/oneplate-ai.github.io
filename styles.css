@@ -61,6 +61,8 @@ h1 em { color: var(--green); font-style: normal; }
 h2 { margin-bottom: 0; font-size: clamp(25px, 3vw, 36px); font-weight: 400; }
 .status { flex: 0 0 auto; padding: 4px 11px; border-radius: 99px; color: var(--accent); background: #f6e3dc; font-size: 12px; font-weight: 700; }
 .radar-copy { max-width: 620px; margin: 25px 0 0; color: var(--muted); }
+.read-link { display: inline-block; margin-top: 8px; color: var(--green); font-weight: 700; text-decoration: none; }
+.read-link:hover { text-decoration: underline; }
 
 .corners { padding: clamp(88px, 13vw, 150px) 0; }
 .corner-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
