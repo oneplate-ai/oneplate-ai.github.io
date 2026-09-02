@@ -6,6 +6,13 @@
   <meta name="description" content="AI 한 접시의 2026년 9월 2일 AI 소식 세 가지">
   <title>오늘 AI 한입 — 2026년 9월 2일 | AI 한 접시</title>
   <link rel="stylesheet" href="../styles.css">
+  <script>
+    (() => {
+      const savedTheme = localStorage.getItem('ai-oneplate-theme');
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = savedTheme || systemTheme;
+    })();
+  </script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-H48MNKGP7S"></script>
   <script>
@@ -28,13 +35,22 @@
     .sources li { overflow-wrap: anywhere; }
     .post-brand { display: inline-block; margin-bottom: 22px; }
     .post-brand .brand-logo.horizontal { width: 190px; height: 68px; }
+    .post-theme-toggle { float: right; margin: 0; }
+    html[data-theme="dark"] article p,
+    html[data-theme="dark"] article ul { color: #c4cdc4; }
+    html[data-theme="dark"] article blockquote { background: #252d27; color: #b8c2b8; }
+    html[data-theme="dark"] .draft-label { background: #49352f; }
+    html[data-theme="dark"] .sources { border-color: var(--line); }
     .back { display: inline-block; margin-bottom: 34px; color: var(--green); font-size: 14px; text-decoration: none; }
   </style>
 </head>
 <body>
   <main class="draft-wrap">
+    <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+      <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+    </button>
     <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
-      <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal.jpg" alt="AI 한 접시" />
+      <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal.png" alt="AI 한 접시" />
     </a>
     <a class="back" href="../index.html">← 홈으로 돌아가기</a>
     <span class="draft-label">오늘 AI 한입 · 2026년 9월 2일</span>
@@ -73,5 +89,21 @@
       </ol>
     </article>
   </main>
+  <script>
+    const postThemeToggle = document.querySelector('.post-theme-toggle');
+    const updatePostThemeButton = () => {
+      const isDark = document.documentElement.dataset.theme === 'dark';
+      postThemeToggle.setAttribute('aria-pressed', String(isDark));
+      postThemeToggle.setAttribute('aria-label', isDark ? '일반 모드로 전환' : '다크 모드로 전환');
+      postThemeToggle.querySelector('.theme-label').textContent = isDark ? '일반 모드' : '다크 모드';
+    };
+    updatePostThemeButton();
+    postThemeToggle.addEventListener('click', () => {
+      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem('ai-oneplate-theme', nextTheme);
+      updatePostThemeButton();
+    });
+  </script>
 </body>
 </html>
