@@ -120,6 +120,8 @@ html[data-theme="dark"] {
   --accent: #e2a083;
   --line: #3b463d;
 }
+html[data-theme="dark"] .brand-logo,
+html[data-theme="dark"] .hero-logo { filter: invert(1) hue-rotate(180deg); }
 html[data-theme="dark"] .series-item:hover { background: #252d27; }
 html[data-theme="dark"] .principle-layout li { border-color: #465148; color: #c4cdc4; }
 html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148; }
