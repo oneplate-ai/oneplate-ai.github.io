@@ -9,10 +9,10 @@
     <meta name="theme-color" content="#14283d" />
     <meta
       name="description"
-      content="AI 한 접시 — AI를 쉽고 가볍게, 그러나 정확하게 읽는 작은 블로그."
+      content="AI 이야기를 담은 한접시 — AI를 쉽고 가볍게, 그러나 정확하게 기록합니다."
     />
     <meta name="naver-site-verification" content="8c8cc958a127917b1868806640cb9e4165b2df24" />
-    <title>AI 한 접시 — AI를 읽는 작은 블로그</title>
+    <title>AI 한 접시 — AI 이야기를 담은 한접시</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -45,26 +45,26 @@
       <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
         메뉴
       </button>
+      <nav id="primary-nav" aria-label="주요 메뉴">
+        <a href="posts/2026-09-02-today-ai-bite.html">오늘 AI 한입</a>
+        <a href="#weekly">주간 AI 한 접시</a>
+        <a href="posts/2026-09-03-easy-ai-01.html">쉽게 먹는 AI</a>
+        <a href="#select-ai">골라 먹는 AI</a>
+        <a href="#deep-ai">깊은 맛 AI</a>
+      </nav>
       <button class="theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
         <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
       </button>
-      <nav id="primary-nav" aria-label="주요 메뉴">
-        <a href="#latest">최신 글</a>
-        <a href="#bite">AI 한입</a>
-        <a href="#weekly">주간 AI 한 접시</a>
-        <a href="#corners">시리즈</a>
-        <a href="#principles">소개</a>
-      </nav>
     </header>
 
     <main id="content">
       <section class="intro wrap">
         <img class="hero-logo" src="assets/brand/logo-basic-tight.png" alt="AI 한 접시" />
-        <p class="eyebrow">AI를 읽는 작은 블로그</p>
+        <p class="eyebrow">AI 이야기를 담은 한접시</p>
         <h1>AI를 쉽고 가볍게,<br /><em>그러나 정확하게.</em></h1>
         <p class="intro-copy">
           매일 쏟아지는 AI 소식 가운데 알아둘 만한 변화를 골라,<br />
-          처음 AI를 배우고 사용하는 사람의 언어로 기록합니다.
+          처음 AI를 배우고 사용하는 사람의 언어로 담습니다.
         </p>
       </section>
 
@@ -83,7 +83,7 @@
             </div>
             <span class="arrow" aria-hidden="true">↗</span>
           </div>
-          <span class="read-time">3분 읽기</span>
+
         </a>
       </section>
 
@@ -112,12 +112,12 @@
             <p>뉴스에서 자주 만나는 개념을 일상의 언어로</p>
             <span class="coming-soon">첫 글 읽기</span>
           </a>
-          <article>
+          <article id="select-ai">
             <h3>골라 먹는 AI</h3>
             <p>내게 맞는 도구와 모델을 선택할 때 필요한 기준</p>
             <span class="coming-soon">곧 시작합니다</span>
           </article>
-          <article>
+          <article id="deep-ai">
             <h3>깊은 맛 AI</h3>
             <p>짧은 뉴스만으로는 부족한 변화와 질문을 더 깊이</p>
             <span class="coming-soon">곧 시작합니다</span>
@@ -144,7 +144,7 @@
       <a class="brand" href="/" aria-label="AI 한 접시 홈">
         <img class="brand-logo symbol" src="assets/brand/logo-symbol-tight.png" alt="AI 한 접시" />
       </a>
-      <p>AI를 함께 알아가는 기록.</p>
+      <p>AI를 함께 담아보는 접시.</p>
     </footer>
     <script>
       const header = document.querySelector('.site-header');

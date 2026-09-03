@@ -38,11 +38,11 @@ a { color: inherit; }
     .brand-logo.horizontal { width: 170px; height: 58px; }
     .brand-logo.symbol { width: 42px; height: 42px; }
     .hero-logo { display: block; width: min(280px, 68vw); height: auto; margin-bottom: 42px; }
-nav { display: flex; gap: 22px; font-size: 13px; color: var(--muted); }
+nav { display: flex; gap: 22px; margin-left: auto; font-size: 13px; color: var(--muted); }
 nav a { text-decoration: none; }
 nav a:hover { color: var(--green); }
 .menu-toggle { display: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; color: var(--green); background: transparent; font: 600 12px var(--sans); }
-.theme-toggle { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; margin-right: 22px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: transparent; cursor: pointer; font: 500 12px var(--sans); }
+.theme-toggle { display: inline-flex; align-items: center; gap: 7px; margin-left: 22px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: transparent; cursor: pointer; font: 500 12px var(--sans); }
 .theme-toggle:hover { color: var(--green); border-color: var(--green); }
 
 .intro { position: relative; padding: clamp(80px, 13vw, 168px) 0 clamp(68px, 10vw, 120px); }
@@ -132,7 +132,7 @@ html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148;
   .wrap, .site-header { width: min(100% - 32px, 1120px); }
   .site-header { min-height: 72px; }
   .brand-logo.horizontal { width: 145px; height: 50px; }
-  .theme-toggle { margin-right: 0; padding: 8px 10px; }
+  .theme-toggle { margin-left: 0; padding: 8px 10px; }
   .theme-label { display: none; }
   .site-header { position: relative; flex-wrap: wrap; }
   .menu-toggle { display: inline-block; cursor: pointer; }

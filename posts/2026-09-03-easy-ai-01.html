@@ -29,7 +29,9 @@
     .post-wrap { width:min(760px, calc(100% - 40px)); margin:0 auto; padding:72px 0 100px; }
     .post-brand { display:inline-block; margin-bottom:22px; }
     .post-brand .brand-logo.horizontal { width:190px; height:68px; }
-    .post-theme-toggle { float:right; margin:0; }
+    .post-header { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:34px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+    .post-actions { display:flex; align-items:center; gap:18px; }
+    .post-theme-toggle { margin:0; }
     article h1 { margin:0 0 18px; font-size:clamp(32px, 5vw, 52px); line-height:1.4; }
     .post-kicker { margin:0 0 10px; color:var(--accent); font-size:14px; font-weight:700; letter-spacing:.04em; }
     article h2 { margin:56px 0 16px; font-size:clamp(24px, 3vw, 32px); }
@@ -39,7 +41,8 @@
     article figure { margin:30px 0 40px; text-align:center; }
     article figure img { display:block; width:min(100%, 560px); height:auto; margin:0 auto; border-radius:18px; }
     article blockquote { margin:24px 0 36px; padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; color:var(--muted); }
-    .back { display:inline-block; margin-bottom:34px; color:var(--green); font-size:14px; text-decoration:none; }
+    .back { display:inline-block; color:var(--green); font-size:14px; text-decoration:none; }
+    @media (max-width:560px) { .post-header { align-items:flex-start; flex-direction:column; gap:8px; } .post-actions { width:100%; justify-content:space-between; } }
     .summary { padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; }
     .sources { padding-top:12px; border-top:1px solid var(--line); font-size:14px; }
     .sources li { overflow-wrap:anywhere; }
@@ -50,13 +53,17 @@
 </head>
 <body>
   <main class="post-wrap">
-    <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
-      <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
-    </button>
-    <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
-      <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시">
-    </a>
-    <a class="back" href="../index.html">← 홈으로 돌아가기</a>
+    <header class="post-header">
+      <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
+        <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시">
+      </a>
+      <div class="post-actions">
+        <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+          <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+        </button>
+        <a class="back" href="../index.html">← 홈으로 돌아가기</a>
+      </div>
+    </header>
     <article>
       <p class="post-kicker">쉽게 먹는 AI 첫번째 접시</p>
       <h1>AI란? 우리가 매일 만나는 기술</h1>
@@ -84,7 +91,7 @@
       <p>AI는 사람을 완전히 대신하는 마법이라기보다, 사람이 더 빠르게 찾고 정리하고 시도하도록 돕는 도구에 가깝습니다.<br /></p>
       <p>목적을 정하고, 결과를 확인하고, 중요한 판단을 내리는 일은 여전히 사람의 몫입니다.<br /></p>
 
-      <h2>오늘의 한 줄 정리</h2>
+      <h2>한 줄 정리</h2>
       <p class="summary"><strong>AI는 사람의 지능이 필요한 일을 컴퓨터가 수행하도록 만든 기술이며, 이미 추천·검색·자동완성 같은 모습으로 우리 일상에 들어와 있습니다.</strong><br /></p>
       <p>다음 글에서는 AI가 데이터를 바탕으로 배우는 방법인 <strong>머신러닝</strong>과, 글·이미지·코드처럼 새로운 결과물을 만드는 <strong>생성형 AI</strong>를 살펴보겠습니다.<br /></p>
 

@@ -41,24 +41,32 @@
     .sources li { overflow-wrap: anywhere; }
     .post-brand { display: inline-block; margin-bottom: 22px; }
     .post-brand .brand-logo.horizontal { width: 190px; height: 68px; }
-    .post-theme-toggle { float: right; margin: 0; }
+    .post-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 34px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .post-actions { display: flex; align-items: center; gap: 18px; }
+    .post-theme-toggle { margin: 0; }
     html[data-theme="dark"] article p,
     html[data-theme="dark"] article ul { color: #c4cdc4; }
     html[data-theme="dark"] article blockquote { background: #252d27; color: #b8c2b8; }
     html[data-theme="dark"] .draft-label { background: #49352f; }
     html[data-theme="dark"] .sources { border-color: var(--line); }
-    .back { display: inline-block; margin-bottom: 34px; color: var(--green); font-size: 14px; text-decoration: none; }
+    .back { display: inline-block; color: var(--green); font-size: 14px; text-decoration: none; }
+    .verification-note { margin: 44px 0 0; padding-top: 12px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 12px; }
+    @media (max-width: 560px) { .post-header { align-items: flex-start; flex-direction: column; gap: 8px; } .post-actions { width: 100%; justify-content: space-between; } }
   </style>
 </head>
 <body>
   <main class="draft-wrap">
-    <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
-      <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
-    </button>
-    <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
-      <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시" />
-    </a>
-    <a class="back" href="../index.html">← 홈으로 돌아가기</a>
+    <header class="post-header">
+      <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
+        <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시" />
+      </a>
+      <div class="post-actions">
+        <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+          <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+        </button>
+        <a class="back" href="../index.html">← 홈으로 돌아가기</a>
+      </div>
+    </header>
     <span class="draft-label">오늘 AI 한입 · 2026년 9월 2일</span>
     <article>
       <p class="post-kicker">오늘 AI 한입</p>
@@ -83,10 +91,9 @@
       <ul><li><strong>분류:</strong> 오픈소스·브라우저 AI</li><li><strong>접근:</strong> 개발자용 오픈소스 / Apache-2.0</li><li><strong>한 줄:</strong> AI가 꼭 거대한 서버에서만 실행될 필요는 없다는 흐름을 보여줍니다.</li></ul>
 
       <h2>오늘의 한 줄 정리</h2>
-      <p>오늘의 공통점은 AI 기능이 좋아졌다는 사실만이 아닙니다.<br /><strong>어떤 데이터에 접근하는지, 얼마나 오래 작업하는지, 어디에서 실행되는지</strong>까지 함께 살펴봐야 하는 단계로 들어섰다는 점입니다.<br /></p>
+      <p class="summary">오늘의 공통점은 AI 기능이 좋아졌다는 사실만이 아닙니다.<br /><strong>어떤 데이터에 접근하는지, 얼마나 오래 작업하는지, 어디에서 실행되는지</strong>까지 함께 살펴봐야 하는 단계로 들어섰다는 점입니다.<br /></p>
 
-      <h2>검증 메모</h2>
-      <p>세 항목은 2026년 9월 1일 발표된 공식 자료를 기준으로 정리했습니다.<br />제품의 실제 이용 가능 범위와 정책은 공개 전에 다시 확인해야 합니다.<br /></p>
+      <p class="verification-note">주석: 세 항목은 2026년 9월 1일 발표된 공식 자료를 기준으로 정리했습니다.<br />제품의 실제 이용 가능 범위와 정책은 공개 전에 다시 확인해야 합니다.<br /></p>
 
       <h2>Sources</h2>
       <ol class="sources">
