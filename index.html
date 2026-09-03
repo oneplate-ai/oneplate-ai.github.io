@@ -47,14 +47,15 @@
       </button>
       <nav id="primary-nav" aria-label="주요 메뉴">
         <a href="series/today-ai-bite/">오늘 AI 한입</a>
-        <a href="#weekly">주간 AI 한 접시</a>
-        <a href="posts/2026-09-03-easy-ai-01.html">쉽게 먹는 AI</a>
-        <a href="#select-ai">골라 먹는 AI</a>
-        <a href="#deep-ai">깊은 맛 AI</a>
+        <a class="coming-soon-link" href="#coming-soon-message" data-series-name="주간 AI 한 접시">주간 AI 한 접시</a>
+        <a href="series/easy-ai/">쉽게 먹는 AI</a>
+        <a class="coming-soon-link" href="#coming-soon-message" data-series-name="골라 먹는 AI">골라 먹는 AI</a>
+        <a class="coming-soon-link" href="#coming-soon-message" data-series-name="깊은 맛 AI">깊은 맛 AI</a>
       </nav>
       <button class="theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
         <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
       </button>
+      <p id="coming-soon-message" class="coming-soon-message" role="status" aria-live="polite" hidden></p>
     </header>
 
     <main id="content">
@@ -94,34 +95,34 @@
           </div>
         </div>
         <div class="series-grid">
-          <a id="bite" class="series-item" href="posts/2026-09-02-today-ai-bite.html">
+          <a id="bite" class="series-item" href="series/today-ai-bite/">
             <span class="series-label">발행 중</span>
             <strong>오늘 AI 한입</strong>
             <span>최근 변화 세 가지를 짧고 정확하게</span>
           </a>
-          <article id="weekly" class="series-item">
+          <a id="weekly" class="series-item coming-soon-link" href="#coming-soon-message" data-series-name="주간 AI 한 접시">
             <span class="series-label">매주 토요일</span>
             <strong>주간 AI 한 접시</strong>
             <span>한 주의 흐름을 차분하게 묶어서</span>
-          </article>
-          <a class="series-item" href="posts/2026-09-03-easy-ai-01.html">
+          </a>
+          <a class="series-item" href="series/easy-ai/">
             <span class="series-label">기초부터 차근차근</span>
             <strong>쉽게 먹는 AI</strong>
             <span>뉴스에서 자주 만나는 개념을 일상의 언어로</span>
             <span class="coming-soon">첫 글 읽기</span>
           </a>
-          <article id="select-ai" class="series-item">
+          <a id="select-ai" class="series-item coming-soon-link" href="#coming-soon-message" data-series-name="골라 먹는 AI">
             <span class="series-label">도구와 활용</span>
             <strong>골라 먹는 AI</strong>
             <p>내게 맞는 도구와 모델을 선택할 때 필요한 기준</p>
             <span class="coming-soon">곧 시작합니다</span>
-          </article>
-          <article id="deep-ai" class="series-item">
+          </a>
+          <a id="deep-ai" class="series-item coming-soon-link" href="#coming-soon-message" data-series-name="깊은 맛 AI">
             <span class="series-label">깊이 있는 해설</span>
             <strong>깊은 맛 AI</strong>
             <p>짧은 뉴스만으로는 부족한 변화와 질문을 더 깊이</p>
             <span class="coming-soon">곧 시작합니다</span>
-          </article>
+          </a>
         </div>
       </section>
 
@@ -176,6 +177,18 @@
         link.addEventListener('click', () => {
           header.classList.remove('nav-open');
           menuToggle.setAttribute('aria-expanded', 'false');
+        });
+      });
+
+      const comingSoonMessage = document.querySelector('#coming-soon-message');
+      let comingSoonTimer;
+      document.querySelectorAll('.coming-soon-link').forEach((link) => {
+        link.addEventListener('click', (event) => {
+          event.preventDefault();
+          comingSoonMessage.textContent = `${link.dataset.seriesName}는 준비중입니다.`;
+          comingSoonMessage.hidden = false;
+          clearTimeout(comingSoonTimer);
+          comingSoonTimer = setTimeout(() => { comingSoonMessage.hidden = true; }, 2800);
         });
       });
     </script>
