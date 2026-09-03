@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/assets/brand/favicon-tight.png">
+  <title>쉽게 먹는 AI — 시리즈 | AI 한 접시</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script>
+    (() => {
+      const savedTheme = localStorage.getItem('ai-oneplate-theme');
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = savedTheme || systemTheme;
+    })();
+  </script>
+  <style>
+    .series-page { width:min(1120px, calc(100% - 40px)); margin:0 auto; padding:54px 0 100px; }
+    .series-page-header { display:flex; align-items:center; gap:18px; padding-bottom:22px; border-bottom:1px solid var(--line); }
+    .series-page-header .brand-logo { width:170px; height:58px; }
+    .series-page-back { color:var(--green); font-size:14px; text-decoration:none; }
+    .series-page-layout { display:grid; grid-template-columns:minmax(0, 1fr) 280px; gap:72px; padding-top:62px; }
+    .series-page article { min-width:0; }
+    .series-page .post-kicker { margin:0 0 10px; color:var(--accent); font-size:14px; font-weight:700; letter-spacing:.04em; }
+    .latest-label { display:inline-block; margin-bottom:18px; padding:5px 10px; border:1px solid var(--line); border-radius:99px; color:var(--muted); font-size:12px; }
+    .series-page article h1 { margin:0 0 18px; font-family:var(--display); font-size:clamp(34px, 5vw, 52px); font-weight:400; letter-spacing:-.065em; line-height:1.4; }
+    .series-page article h2 { margin:56px 0 16px; font-size:clamp(24px, 3vw, 32px); }
+    .series-page article p, .series-page article ul { color:#3f493f; }
+    .series-page article ul { padding-left:22px; }
+    .series-page article li { margin:5px 0; }
+    .series-page article figure { margin:30px 0 40px; text-align:center; }
+    .series-page article figure img { display:block; width:min(100%, 560px); height:auto; margin:0 auto; border-radius:18px; }
+    .series-page article blockquote { margin:24px 0 36px; padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; color:var(--muted); }
+    .series-page .summary { padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; }
+    .series-page .sources { padding-top:12px; border-top:1px solid var(--line); font-size:14px; }
+    .series-page .sources li { overflow-wrap:anywhere; }
+    .series-archive { align-self:start; padding:24px; border:1px solid var(--line); }
+    .series-archive h2 { margin:0 0 20px; font-size:22px; }
+    .series-archive p { margin:0 0 20px; color:var(--muted); font-size:13px; }
+    .series-archive-list { margin:0; padding:0; list-style:none; }
+    .series-archive-list li { border-top:1px solid var(--line); }
+    .series-archive-list a { display:block; padding:15px 0; color:inherit; text-decoration:none; }
+    .series-archive-list .current { padding-left:12px; border-left:3px solid var(--accent); }
+    .series-archive-list time { display:block; margin-bottom:4px; color:var(--muted); font-size:11px; }
+    .series-archive-list strong { display:block; font-size:14px; font-weight:600; }
+    .series-archive-list span { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
+    html[data-theme="dark"] .series-page article p, html[data-theme="dark"] .series-page article ul { color:#c4cdc4; }
+    html[data-theme="dark"] .series-page article blockquote, html[data-theme="dark"] .series-page .summary { background:#252d27; color:#b8c2b8; }
+    @media (max-width:760px) {
+      .series-page-layout { grid-template-columns:1fr; gap:46px; padding-top:44px; }
+      .series-archive { order:2; }
+      .series-page-header .brand-logo { width:145px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="series-page">
+    <header class="series-page-header">
+      <a href="../../index.html" aria-label="AI 한 접시 홈"><img class="brand-logo" src="../../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시"></a>
+      <a class="series-page-back" href="../../index.html">← 메인으로 돌아가기</a>
+    </header>
+    <div class="series-page-layout">
+      <article id="latest">
+        <p class="post-kicker">쉽게 먹는 AI</p>
+        <span class="latest-label">가장 최근에 차려진 글 · 2026년 9월 3일</span>
+      <h1>AI란? 우리가 매일 만나는 기술</h1>
+      <blockquote>AI를 처음 만나는 사람을 위해, 우리가 이미 일상에서 사용하고 있는 AI부터 천천히 살펴봅니다.<br /></blockquote>
+
+      <h2>AI의 뜻부터 알아볼게요</h2>
+      <p>AI는 <strong>Artificial Intelligence</strong>의 줄임말로, 우리말로는 <strong>인공지능</strong>이라고 합니다.<br /></p>
+      <p>인공지능은 <strong>사람의 지능이 필요한 일을 컴퓨터가 수행하도록 만든 기술</strong>입니다.<br />여기서 사람의 지능이 필요한 일이란 글을 이해하거나, 사진을 구분하거나, 정보를 바탕으로 판단하고 예측하는 일을 말합니다.<br /></p>
+      <p>Google Cloud는 AI를 컴퓨터가 언어를 이해하고, 데이터를 분석하고, 추천을 제공하는 등 과거에는 사람의 지능이 필요했던 작업을 수행하게 하는 기술로 설명합니다.<br /><a href="https://cloud.google.com/learn/what-is-artificial-intelligence">AI의 기본 개념을 공식 설명으로 보기</a><br /></p>
+      <p>다만 AI가 사람의 마음이나 생각을 그대로 갖고 있다는 뜻은 아닙니다.<br />컴퓨터가 사람처럼 느끼고 고민한다기보다, 많은 정보에서 패턴을 찾아 주어진 작업을 수행한다는 의미에 가깝습니다.<br /></p>
+      <figure><img src="../assets/images/easy-ai-01-helping-result.png" alt="사람에게 완성된 결과물을 건네며 작업을 돕는 AI"></figure>
+
+      <h2>AI는 이미 우리 곁에 있습니다</h2>
+      <p>AI라고 하면 ChatGPT나 그림을 만들어주는 서비스를 먼저 떠올리기 쉽습니다.<br />하지만 AI는 그보다 훨씬 전부터 우리 주변에서 사용되고 있었습니다.<br /></p>
+      <ul><li>동영상 서비스가 좋아할 만한 영상을 추천할 때</li><li>내비게이션이 막히는 길을 피해 경로를 안내할 때</li><li>휴대폰이 사진 속 얼굴이나 글자를 찾아줄 때</li><li>이메일 서비스가 스팸 메일을 걸러낼 때</li><li>키보드가 다음에 쓸 단어를 예상할 때</li></ul>
+      <p>이 기능들의 공통점은 컴퓨터가 여러 정보를 바탕으로 일정한 <strong>판단·분류·예측</strong>을 한다는 것입니다.<br /></p>
+      <figure><img src="../assets/images/easy-ai-01-walking-recommendation.png" alt="AI가 상황에 맞는 콘텐츠를 추천해 주는 모습"></figure>
+
+      <h2>AI는 어떻게 판단할까요?</h2>
+      <p>스팸 메일을 예로 들어보겠습니다.<br />AI는 “이 메일이 싫다”고 느끼지 않습니다.<br />과거에 스팸으로 분류된 메일에서 자주 나타난 단어, 발신자, 문장 형태 등을 살펴보고 새 메일이 스팸일 가능성을 계산합니다.<br /></p>
+      <p>그래서 AI의 결과는 유용할 수 있지만 항상 맞는 것은 아닙니다.<br />학습한 정보가 부족하거나 새로운 상황을 만나면 결과가 달라질 수 있습니다.<br /></p>
+      <figure><img src="../assets/images/easy-ai-01-simple-patterns.png" alt="AI가 여러 예시에서 공통된 패턴을 찾는 모습"></figure>
+
+      <h2>AI를 도구로 바라보기</h2>
+      <p>AI는 사람을 완전히 대신하는 마법이라기보다, 사람이 더 빠르게 찾고 정리하고 시도하도록 돕는 도구에 가깝습니다.<br /></p>
+      <p>목적을 정하고, 결과를 확인하고, 중요한 판단을 내리는 일은 여전히 사람의 몫입니다.<br /></p>
+
+      <h2>한 줄 정리</h2>
+      <p class="summary"><strong>AI는 사람의 지능이 필요한 일을 컴퓨터가 수행하도록 만든 기술이며, 이미 추천·검색·자동완성 같은 모습으로 우리 일상에 들어와 있습니다.</strong><br /></p>
+      <p>다음 글에서는 AI가 데이터를 바탕으로 배우는 방법인 <strong>머신러닝</strong>과, 글·이미지·코드처럼 새로운 결과물을 만드는 <strong>생성형 AI</strong>를 살펴보겠습니다.<br /></p>
+
+      <h2>출처</h2>
+      <ul class="sources">
+        <li><a href="https://cloud.google.com/learn/what-is-artificial-intelligence">Google Cloud — What is Artificial Intelligence?</a></li>
+        <li><a href="https://ibm.com/think/topics/artificial-intelligence">IBM — What Is Artificial Intelligence?</a></li>
+      </ul>
+      </article>
+      <aside class="series-archive" aria-labelledby="archive-title">
+        <h2 id="archive-title">쉽게 먹는 AI 목록</h2>
+        <p>최신 글을 먼저 보여드리고, 이전 글은 이 목록에서 골라 읽습니다.</p>
+        <ol class="series-archive-list">
+          <li><a class="current" href="#latest"><time datetime="2026-09-03">2026. 09. 03</time><strong>AI란? 우리가 매일 만나는 기술</strong><span>현재 읽고 있는 글</span></a></li>
+        </ol>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>
