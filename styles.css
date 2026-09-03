@@ -42,6 +42,7 @@ a { color: inherit; }
 nav { display: flex; gap: 22px; margin-left: auto; font-size: 13px; color: var(--muted); }
 nav a { text-decoration: none; }
 nav a:hover { color: var(--green); }
+.post-header, .series-page-header { min-height: 92px; }
 .menu-toggle { display: none; border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; color: var(--green); background: transparent; font: 600 12px var(--sans); }
 .theme-toggle { display: inline-flex; align-items: center; gap: 7px; margin-left: 22px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: transparent; cursor: pointer; font: 500 12px var(--sans); }
 .theme-toggle:hover { color: var(--green); border-color: var(--green); }
@@ -144,6 +145,7 @@ html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148;
   nav { display: none; grid-column: 1 / -1; grid-row: 2; width: 100%; margin-left: 0; padding: 14px 0 18px; flex-direction: column; gap: 0; border-top: 1px solid var(--line); }
   .site-header > .brand { grid-column: 1; grid-row: 1; }
   .site-header > .theme-toggle { grid-column: 3; grid-row: 1; }
+  .post-header, .series-page-header { min-height: 72px; }
   .site-header.nav-open nav { display: flex; }
   nav a { min-height: 44px; display: flex; align-items: center; }
   .intro { padding-top: 82px; }
