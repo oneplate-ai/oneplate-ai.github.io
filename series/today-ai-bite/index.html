@@ -18,6 +18,7 @@
     .series-page-header { display:flex; align-items:center; gap:18px; padding-bottom:22px; border-bottom:1px solid var(--line); }
     .series-page-header .brand-logo { width:170px; height:58px; }
     .series-page-back { color:var(--green); font-size:14px; text-decoration:none; }
+    .series-page-theme-toggle { margin-left:auto; }
     .series-page-layout { display:grid; grid-template-columns:minmax(0, 1fr) 280px; gap:72px; padding-top:62px; }
     .series-page article { min-width:0; }
     .series-page .post-kicker { margin:0 0 10px; color:var(--accent); font-size:14px; font-weight:700; letter-spacing:.04em; }
@@ -58,6 +59,7 @@
     <header class="series-page-header">
       <a href="../../index.html" aria-label="AI 한 접시 홈"><img class="brand-logo" src="../../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시"></a>
       <a class="series-page-back" href="../../index.html">← 메인으로 돌아가기</a>
+      <button class="theme-toggle series-page-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환"><span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span></button>
     </header>
     <div class="series-page-layout">
       <article id="latest">
@@ -104,5 +106,21 @@
       </aside>
     </div>
   </main>
+  <script>
+    const seriesThemeToggle = document.querySelector('.series-page-theme-toggle');
+    const updateSeriesThemeButton = () => {
+      const isDark = document.documentElement.dataset.theme === 'dark';
+      seriesThemeToggle.setAttribute('aria-pressed', String(isDark));
+      seriesThemeToggle.setAttribute('aria-label', isDark ? '일반 모드로 전환' : '다크 모드로 전환');
+      seriesThemeToggle.querySelector('.theme-label').textContent = isDark ? '일반 모드' : '다크 모드';
+    };
+    updateSeriesThemeButton();
+    seriesThemeToggle.addEventListener('click', () => {
+      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem('ai-oneplate-theme', nextTheme);
+      updateSeriesThemeButton();
+    });
+  </script>
 </body>
 </html>
