@@ -48,7 +48,7 @@ nav a:hover { color: var(--green); }
 .theme-toggle:hover { color: var(--green); border-color: var(--green); }
 .coming-soon-message { position: fixed; top: 100px; left: 50%; z-index: 5; max-width: min(90vw, 360px); margin: 0; padding: 9px 14px; transform: translateX(-50%); border: 1px solid var(--line); border-radius: 999px; background: var(--paper-deep); color: var(--muted); font-size: 12px; pointer-events: none; box-shadow: 0 4px 18px rgb(32 39 32 / 8%); }
 
-.intro { position: relative; padding: clamp(80px, 13vw, 168px) 0 clamp(68px, 10vw, 120px); }
+.intro { position: relative; padding: 65px 0 clamp(68px, 10vw, 120px); }
 .hero-logo { position: absolute; top: 50%; right: 1%; display: block; width: min(260px, 27vw); height: auto; margin: 0; opacity: .94; transform: translateY(-50%); }
 .eyebrow { margin: 0 0 14px; color: var(--green); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; }
 h1, h2, h3, p { margin-top: 0; }
@@ -148,7 +148,7 @@ html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148;
   .post-header, .series-page-header { min-height: 72px; }
   .site-header.nav-open nav { display: flex; }
   nav a { min-height: 44px; display: flex; align-items: center; }
-  .intro { padding-top: 82px; }
+  .intro { padding-top: 65px; }
   .hero-logo { position: static; width: 168px; margin: 0 auto 30px; opacity: .94; transform: none; }
   .corner-grid { grid-template-columns: 1fr; }
   .series-grid { grid-template-columns: repeat(6, 1fr); }
