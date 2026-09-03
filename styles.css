@@ -81,7 +81,9 @@ h2 { margin-bottom: 0; font-size: clamp(25px, 3vw, 36px); font-weight: 400; }
 
 .corners { padding: clamp(88px, 13vw, 150px) 0; }
 .corner-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.corner-grid article { min-height: 205px; padding: 28px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.corner-grid article, .corner-grid > a { min-height: 205px; padding: 28px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.corner-grid > a { display: block; color: inherit; text-decoration: none; }
+.corner-grid > a:hover h3 { color: var(--green); }
 .corner-number { display: block; margin-bottom: 34px; color: var(--accent); font: 500 12px/1 var(--sans); letter-spacing: .08em; }
 .coming-soon { margin: 22px 0 0; color: var(--muted); font-weight: 400; }
 h3 { margin-bottom: 9px; font-size: 19px; letter-spacing: -0.05em; }
