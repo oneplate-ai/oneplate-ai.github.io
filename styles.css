@@ -136,7 +136,7 @@ html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148;
 @media (max-width: 720px) {
   .wrap, .site-header { width: min(100% - 32px, 1120px); }
   .site-header { min-height: 72px; }
-  .site-header { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; column-gap: 10px; }
+  .site-header { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-rows: 72px auto; align-content: start; column-gap: 10px; }
   .brand-logo.horizontal { width: 145px; height: 50px; }
   .theme-toggle { margin-left: 0; padding: 8px 10px; }
   .theme-label { display: none; }
