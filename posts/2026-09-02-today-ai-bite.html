@@ -56,16 +56,25 @@
   </style>
 </head>
 <body>
+  <header class="site-header">
+    <a class="brand" href="../index.html" aria-label="AI 한 접시 홈">
+      <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시" />
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">메뉴</button>
+    <nav id="primary-nav" aria-label="주요 메뉴">
+      <a href="../series/today-ai-bite/">오늘 AI 한입</a>
+      <a href="../index.html#corners">주간 AI 한 접시</a>
+      <a href="../series/easy-ai/">쉽게 먹는 AI</a>
+      <a href="../index.html#select-ai">골라 먹는 AI</a>
+      <a href="../index.html#deep-ai">깊은 맛 AI</a>
+    </nav>
+    <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+      <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+    </button>
+  </header>
+
   <main class="draft-wrap">
-    <header class="post-header">
-      <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
-        <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시" />
-      </a>
-      <a class="back" href="../index.html">← 홈으로 돌아가기</a>
-      <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
-        <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
-      </button>
-    </header>
+
     <article>
       <p class="post-kicker">오늘 AI 한입</p>
       <h1>2026년 9월 2일</h1>
@@ -115,6 +124,21 @@
       document.documentElement.dataset.theme = nextTheme;
       localStorage.setItem('ai-oneplate-theme', nextTheme);
       updatePostThemeButton();
+    });
+  </script>
+  <script>
+    const siteHeader = document.querySelector('.site-header');
+    const siteMenuToggle = document.querySelector('.menu-toggle');
+    const sitePrimaryNav = document.querySelector('#primary-nav');
+    siteMenuToggle.addEventListener('click', () => {
+      const isOpen = siteHeader.classList.toggle('nav-open');
+      siteMenuToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    sitePrimaryNav.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        siteHeader.classList.remove('nav-open');
+        siteMenuToggle.setAttribute('aria-expanded', 'false');
+      });
     });
   </script>
 </body>
