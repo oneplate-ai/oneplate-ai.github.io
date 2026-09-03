@@ -1,0 +1,85 @@
+name: Validate site
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-site:
+    name: validate-site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate HTML, local assets, and sitemap
+        shell: python
+        run: |
+          import html.parser
+          import pathlib
+          import sys
+          import urllib.parse
+          import xml.etree.ElementTree as ET
+
+          root = pathlib.Path.cwd()
+          errors = []
+
+          class AssetParser(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.references = []
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  for key in ("href", "src"):
+                      value = attrs.get(key)
+                      if value:
+                          self.references.append((tag, key, value))
+
+          def local_path(value, source):
+              parsed = urllib.parse.urlparse(value)
+              if parsed.scheme or parsed.netloc or value.startswith(("#", "mailto:", "tel:", "data:")):
+                  return None
+              path = urllib.parse.unquote(parsed.path)
+              if not path:
+                  return None
+              if path.startswith("/"):
+                  return root / path[1:]
+              return (source.parent / path).resolve()
+
+          html_files = sorted(
+              p for p in root.rglob("*.html")
+              if ".git" not in p.parts and "drafts" not in p.parts
+          )
+          if not html_files:
+              errors.append("공개 HTML 파일이 없습니다.")
+
+          for path in html_files:
+              parser = AssetParser()
+              try:
+                  parser.feed(path.read_text(encoding="utf-8"))
+                  parser.close()
+              except Exception as exc:
+                  errors.append(f"{path}: HTML 읽기 실패: {exc}")
+                  continue
+              for tag, key, value in parser.references:
+                  target = local_path(value, path)
+                  if target is not None and not target.exists():
+                      errors.append(f"{path}: {key} 대상 없음: {value}")
+
+          sitemap = root / "sitemap.xml"
+          try:
+              ET.parse(sitemap)
+          except Exception as exc:
+              errors.append(f"sitemap.xml: XML 파싱 실패: {exc}")
+
+          if errors:
+              print("검사 실패:")
+              print("\n".join(f"- {error}" for error in errors))
+              sys.exit(1)
+
+          print(f"검사 성공: 공개 HTML {len(html_files)}개, 로컬 링크·자산·sitemap.xml 확인")
