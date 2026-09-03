@@ -27,11 +27,10 @@
   </script>
   <style>
     .post-wrap { width:min(760px, calc(100% - 40px)); margin:0 auto; padding:72px 0 100px; }
-    .post-brand { display:inline-block; margin-bottom:22px; }
+    .post-brand { display:inline-block; margin-bottom:0; }
     .post-brand .brand-logo.horizontal { width:190px; height:68px; }
-    .post-header { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:34px; padding-bottom:18px; border-bottom:1px solid var(--line); }
-    .post-actions { display:flex; align-items:center; gap:18px; }
-    .post-theme-toggle { margin:0; }
+    .post-header { display:flex; align-items:center; gap:18px; margin-bottom:34px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+    .post-theme-toggle { margin:0 0 0 auto; }
     article h1 { margin:0 0 18px; font-size:clamp(32px, 5vw, 52px); line-height:1.4; }
     .post-kicker { margin:0 0 10px; color:var(--accent); font-size:14px; font-weight:700; letter-spacing:.04em; }
     article h2 { margin:56px 0 16px; font-size:clamp(24px, 3vw, 32px); }
@@ -42,7 +41,7 @@
     article figure img { display:block; width:min(100%, 560px); height:auto; margin:0 auto; border-radius:18px; }
     article blockquote { margin:24px 0 36px; padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; color:var(--muted); }
     .back { display:inline-block; color:var(--green); font-size:14px; text-decoration:none; }
-    @media (max-width:560px) { .post-header { align-items:flex-start; flex-direction:column; gap:8px; } .post-actions { width:100%; justify-content:space-between; } }
+    @media (max-width:560px) { .post-header { gap:10px; } .post-brand .brand-logo.horizontal { width:145px; } .post-theme-toggle { padding:8px 10px; } }
     .summary { padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; }
     .sources { padding-top:12px; border-top:1px solid var(--line); font-size:14px; }
     .sources li { overflow-wrap:anywhere; }
@@ -57,12 +56,10 @@
       <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
         <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시">
       </a>
-      <div class="post-actions">
-        <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
-          <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
-        </button>
-        <a class="back" href="../index.html">← 홈으로 돌아가기</a>
-      </div>
+      <a class="back" href="../index.html">← 홈으로 돌아가기</a>
+      <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+        <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+      </button>
     </header>
     <article>
       <p class="post-kicker">쉽게 먹는 AI 첫번째 접시</p>

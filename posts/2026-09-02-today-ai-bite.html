@@ -39,11 +39,10 @@
     article li { margin: 5px 0; }
     .sources { padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
     .sources li { overflow-wrap: anywhere; }
-    .post-brand { display: inline-block; margin-bottom: 22px; }
+    .post-brand { display: inline-block; margin-bottom: 0; }
     .post-brand .brand-logo.horizontal { width: 190px; height: 68px; }
-    .post-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 34px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
-    .post-actions { display: flex; align-items: center; gap: 18px; }
-    .post-theme-toggle { margin: 0; }
+    .post-header { display: flex; align-items: center; gap: 18px; margin-bottom: 34px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .post-theme-toggle { margin: 0 0 0 auto; }
     html[data-theme="dark"] article p,
     html[data-theme="dark"] article ul { color: #c4cdc4; }
     html[data-theme="dark"] article blockquote { background: #252d27; color: #b8c2b8; }
@@ -51,7 +50,7 @@
     html[data-theme="dark"] .sources { border-color: var(--line); }
     .back { display: inline-block; color: var(--green); font-size: 14px; text-decoration: none; }
     .verification-note { margin: 44px 0 0; padding-top: 12px; border-top: 1px dashed var(--line); color: var(--muted); font-size: 12px; }
-    @media (max-width: 560px) { .post-header { align-items: flex-start; flex-direction: column; gap: 8px; } .post-actions { width: 100%; justify-content: space-between; } }
+    @media (max-width: 560px) { .post-header { gap: 10px; } .post-brand .brand-logo.horizontal { width: 145px; } .post-theme-toggle { padding: 8px 10px; } }
   </style>
 </head>
 <body>
@@ -60,12 +59,10 @@
       <a class="post-brand" href="../index.html" aria-label="AI 한 접시 홈">
         <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시" />
       </a>
-      <div class="post-actions">
-        <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
-          <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
-        </button>
-        <a class="back" href="../index.html">← 홈으로 돌아가기</a>
-      </div>
+      <a class="back" href="../index.html">← 홈으로 돌아가기</a>
+      <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+        <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+      </button>
     </header>
     <span class="draft-label">오늘 AI 한입 · 2026년 9월 2일</span>
     <article>
@@ -93,7 +90,7 @@
       <h2>오늘의 한 줄 정리</h2>
       <p class="summary">오늘의 공통점은 AI 기능이 좋아졌다는 사실만이 아닙니다.<br /><strong>어떤 데이터에 접근하는지, 얼마나 오래 작업하는지, 어디에서 실행되는지</strong>까지 함께 살펴봐야 하는 단계로 들어섰다는 점입니다.<br /></p>
 
-      <p class="verification-note">주석: 세 항목은 2026년 9월 1일 발표된 공식 자료를 기준으로 정리했습니다.<br />제품의 실제 이용 가능 범위와 정책은 공개 전에 다시 확인해야 합니다.<br /></p>
+      <p class="verification-note">세 항목은 2026년 9월 1일 발표된 공식 자료를 기준으로 정리했습니다.<br />제품의 실제 이용 가능 범위와 정책은 공개 전에 다시 확인해야 합니다.<br /></p>
 
       <h2>Sources</h2>
       <ol class="sources">
