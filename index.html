@@ -175,6 +175,7 @@
 
       primaryNav.querySelectorAll('a').forEach((link) => {
         link.addEventListener('click', () => {
+          if (link.classList.contains('coming-soon-link')) return;
           header.classList.remove('nav-open');
           menuToggle.setAttribute('aria-expanded', 'false');
         });
@@ -186,6 +187,10 @@
         link.addEventListener('click', (event) => {
           event.preventDefault();
           comingSoonMessage.textContent = `${link.dataset.seriesName}는 준비중입니다.`;
+          const bounds = link.getBoundingClientRect();
+          const isMobile = window.matchMedia('(max-width: 720px)').matches;
+          comingSoonMessage.style.left = `${isMobile ? window.innerWidth / 2 : bounds.left + bounds.width / 2}px`;
+          comingSoonMessage.style.top = `${isMobile ? Math.min(bounds.bottom + 10, window.innerHeight - 80) : bounds.bottom + 10}px`;
           comingSoonMessage.hidden = false;
           clearTimeout(comingSoonTimer);
           comingSoonTimer = setTimeout(() => { comingSoonMessage.hidden = true; }, 2800);
