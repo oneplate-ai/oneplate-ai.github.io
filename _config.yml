@@ -19,3 +19,4 @@ exclude:
   - README.md
   - PUBLISHING_RULES.md
   - docs/
+  - posts/
