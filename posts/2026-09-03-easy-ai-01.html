@@ -26,7 +26,7 @@
     gtag('config', 'G-H48MNKGP7S');
   </script>
   <style>
-    .post-wrap { width:min(760px, calc(100% - 40px)); margin:0 auto; padding:65px 0 100px; }
+    .draft-wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 65px 0 100px; }
     .post-brand { display:inline-block; margin-bottom:0; }
     .post-brand .brand-logo.horizontal { width:170px; height:58px; }
     .post-header { display:flex; align-items:center; gap:18px; margin-bottom:34px; padding-bottom:0; border-bottom:1px solid var(--line); }
@@ -40,7 +40,7 @@
     article figure img { display:block; width:min(100%, 560px); height:auto; margin:0 auto; border-radius:18px; }
     article blockquote { margin:24px 0 36px; padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; color:var(--muted); }
     .back { display:inline-block; color:var(--green); font-size:14px; text-decoration:none; }
-    @media (max-width:560px) { .post-header { gap:10px; } .post-brand .brand-logo.horizontal { width:145px; height:50px; } .post-theme-toggle { padding:8px 10px; } }
+    @media (max-width:560px) { .post-layout { grid-template-columns:1fr; gap:46px; } .post-layout .post-archive { position:static; } .post-header { gap:10px; } .post-brand .brand-logo.horizontal { width:145px; height:50px; } .post-theme-toggle { padding:8px 10px; } }
     .summary { padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; }
     .post-archive { margin-top:48px; padding-top:24px; border-top:1px solid var(--line); }
     .post-archive h2 { margin:0 0 16px; font-size:22px; }
@@ -52,6 +52,9 @@
     .post-archive-list strong { display:block; font-size:14px; font-weight:600; }
     .post-archive-list span { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
     html[data-theme="dark"] .post-archive-list a:hover, html[data-theme="dark"] .post-archive-list a.current { background:#252d27; }
+    .post-layout { display:grid; grid-template-columns:minmax(0, 1fr) 250px; gap:64px; align-items:start; }
+    .post-layout article { min-width:0; }
+    .post-layout .post-archive { margin-top:0; position:sticky; top:24px; }
     .sources { padding-top:12px; border-top:1px solid var(--line); font-size:14px; }
     .sources li { overflow-wrap:anywhere; }
     html[data-theme="dark"] article p, html[data-theme="dark"] article ul { color:#c4cdc4; }
@@ -79,6 +82,7 @@
   </header>
 
   <main id="content" class="post-wrap">
+    <div class="post-layout">
 
     <article>
       <p class="post-kicker">쉽게 먹는 AI 첫번째 접시</p>
@@ -124,6 +128,7 @@
         <li><a class="current" href="#content"><time datetime="2026-09-03">2026. 09. 03</time><strong>AI란? 우리가 매일 만나는 기술</strong><span>현재 읽고 있는 글</span></a></li>
       </ol>
     </aside>
+    </div>
   </main>
   <script>
     const postThemeToggle = document.querySelector('.post-theme-toggle');
