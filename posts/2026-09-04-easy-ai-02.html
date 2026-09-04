@@ -28,6 +28,16 @@
     article figure { margin:30px 0 40px; text-align:center; }
     article figure img { display:block; width:min(100%, 720px); height:auto; margin:0 auto; border-radius:18px; }
     .summary { padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; }
+    .post-archive { margin-top:48px; padding-top:24px; border-top:1px solid var(--line); }
+    .post-archive h2 { margin:0 0 16px; font-size:22px; }
+    .post-archive-list { margin:0; padding:0; list-style:none; }
+    .post-archive-list li { border-top:1px solid var(--line); }
+    .post-archive-list a { display:block; padding:13px 12px; color:inherit; text-decoration:none; }
+    .post-archive-list a:hover, .post-archive-list a.current { background:#fbf8f1; }
+    .post-archive-list time { display:block; margin-bottom:3px; color:var(--muted); font-size:11px; }
+    .post-archive-list strong { display:block; font-size:14px; font-weight:600; }
+    .post-archive-list span { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
+    html[data-theme="dark"] .post-archive-list a:hover, html[data-theme="dark"] .post-archive-list a.current { background:#252d27; }
     .sources { padding-top:12px; border-top:1px solid var(--line); font-size:14px; }
     .sources li { overflow-wrap:anywhere; }
     html[data-theme="dark"] article p, html[data-theme="dark"] article ul { color:#c4cdc4; }
@@ -54,7 +64,7 @@
     <p id="coming-soon-message" class="coming-soon-message" role="status" aria-live="polite" hidden></p>
   </header>
 
-  <main class="post-wrap">
+  <main id="content" class="post-wrap">
     <article>
       <p class="post-kicker">쉽게 먹는 AI 두번째 접시</p>
       <h1>머신러닝과 생성형 AI의 차이점</h1>
@@ -105,6 +115,13 @@
         <li><a href="https://developers.google.com/machine-learning/intro-to-ml/what-is-ml">Google for Developers — What is Machine Learning?</a></li>
       </ul>
     </article>
+    <aside class="post-archive" aria-labelledby="post-archive-title">
+      <h2 id="post-archive-title">쉽게 먹는 AI 목록</h2>
+      <ol class="post-archive-list">
+        <li><a class="current" href="#content"><time datetime="2026-09-04">2026. 09. 04</time><strong>머신러닝과 생성형 AI의 차이점</strong><span>현재 읽고 있는 글</span></a></li>
+        <li><a href="2026-09-03-easy-ai-01.html"><time datetime="2026-09-03">2026. 09. 03</time><strong>AI란? 우리가 매일 만나는 기술</strong><span>지난 글</span></a></li>
+      </ol>
+    </aside>
   </main>
   <script>
     const postThemeToggle = document.querySelector('.post-theme-toggle');
