@@ -40,10 +40,18 @@
     <a class="brand" href="../index.html" aria-label="AI 한 접시 홈">
       <img class="brand-logo horizontal" src="../assets/brand/logo-horizontal-tight.png" alt="AI 한 접시" />
     </a>
-    <nav aria-label="주요 메뉴">
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">메뉴</button>
+    <nav id="primary-nav" aria-label="주요 메뉴">
       <a href="../series/today-ai-bite/">오늘 AI 한입</a>
+      <a class="coming-soon-link" href="#coming-soon-message" data-series-name="주간 AI 한 접시">주간 AI 한 접시</a>
       <a href="../series/easy-ai/">쉽게 먹는 AI</a>
+      <a class="coming-soon-link" href="#coming-soon-message" data-series-name="골라 먹는 AI">골라 먹는 AI</a>
+      <a class="coming-soon-link" href="#coming-soon-message" data-series-name="깊은 맛 AI">깊은 맛 AI</a>
     </nav>
+    <button class="theme-toggle post-theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
+      <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+    </button>
+    <p id="coming-soon-message" class="coming-soon-message" role="status" aria-live="polite" hidden></p>
   </header>
 
   <main class="post-wrap">
@@ -98,5 +106,51 @@
       </ul>
     </article>
   </main>
+  <script>
+    const postThemeToggle = document.querySelector('.post-theme-toggle');
+    const updatePostThemeButton = () => {
+      const isDark = document.documentElement.dataset.theme === 'dark';
+      postThemeToggle.setAttribute('aria-pressed', String(isDark));
+      postThemeToggle.setAttribute('aria-label', isDark ? '일반 모드로 전환' : '다크 모드로 전환');
+      postThemeToggle.querySelector('.theme-label').textContent = isDark ? '일반 모드' : '다크 모드';
+    };
+    updatePostThemeButton();
+    postThemeToggle.addEventListener('click', () => {
+      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem('ai-oneplate-theme', nextTheme);
+      updatePostThemeButton();
+    });
+  </script>
+  <script>
+    const siteHeader = document.querySelector('.site-header');
+    const siteMenuToggle = document.querySelector('.menu-toggle');
+    const sitePrimaryNav = document.querySelector('#primary-nav');
+    siteMenuToggle.addEventListener('click', () => {
+      const isOpen = siteHeader.classList.toggle('nav-open');
+      siteMenuToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    sitePrimaryNav.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        if (link.classList.contains('coming-soon-link')) {
+          event.preventDefault();
+          const message = document.querySelector('#coming-soon-message');
+          message.textContent = `${link.dataset.seriesName}는 준비중입니다.`;
+          const bounds = link.getBoundingClientRect();
+          const isMobile = window.matchMedia('(max-width: 720px)').matches;
+          message.style.left = `${isMobile ? window.innerWidth / 2 : bounds.left + bounds.width / 2}px`;
+          message.style.top = `${isMobile ? Math.min(bounds.bottom + 10, window.innerHeight - 80) : bounds.bottom + 10}px`;
+          message.hidden = false;
+          clearTimeout(window.comingSoonTimer);
+          window.comingSoonTimer = setTimeout(() => { message.hidden = true; }, 1500);
+          siteHeader.classList.remove('nav-open');
+          siteMenuToggle.setAttribute('aria-expanded', 'false');
+          return;
+        }
+        siteHeader.classList.remove('nav-open');
+        siteMenuToggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  </script>
 </body>
 </html>
