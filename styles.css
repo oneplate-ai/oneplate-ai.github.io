@@ -242,6 +242,7 @@ html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148;
   width: min(100%, 640px);
   height: auto;
   margin: 0 auto;
+  border-radius: 8px;
 }
 .source-badge {
   display: inline-block;
