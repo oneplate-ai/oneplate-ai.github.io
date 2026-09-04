@@ -1,21 +1,30 @@
+---
+layout: null
+permalink: /sitemap.xml
+---
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://oneplate-ai.github.io/</loc>
+    <loc>{{ site.url }}{{ '/' | relative_url }}</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
   </url>
+  {% for series in site.data.series %}
+    {% assign series_posts = site.posts | where: 'series', series.slug %}
+    {% if series_posts.size > 0 %}
   <url>
-    <loc>https://oneplate-ai.github.io/posts/2026-09-03-easy-ai-01.html</loc>
+    <loc>{{ site.url }}{{ '/series/' | append: series.slug | append: '/' | relative_url }}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
+    {% endif %}
+  {% endfor %}
+  {% for post in site.posts %}
   <url>
-    <loc>https://oneplate-ai.github.io/posts/2026-09-04-easy-ai-02.html</loc>
+    <loc>{{ site.url }}{{ post.url | relative_url }}</loc>
+    <lastmod>{{ post.date | date_to_xmlschema }}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
-  <url>
-    <loc>https://oneplate-ai.github.io/posts/2026-09-02-today-ai-bite.html</loc>
-  </url>
-  <url>
-    <loc>https://oneplate-ai.github.io/series/today-ai-bite/</loc>
-  </url>
-  <url>
-    <loc>https://oneplate-ai.github.io/series/easy-ai/</loc>
-  </url>
+  {% endfor %}
 </urlset>

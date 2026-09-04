@@ -19,6 +19,7 @@ exclude:
   - README.md
   - PUBLISHING_RULES.md
   - docs/
+  - index.html
   - posts/
   - series/easy-ai/index.html
   - series/today-ai-bite/index.html
