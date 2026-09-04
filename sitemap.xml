@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://oneplate-ai.github.io/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+
+
+  <url>
+    <loc>https://oneplate-ai.github.io/series/today-ai-bite/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+
+
+
+
+
+
+  <url>
+    <loc>https://oneplate-ai.github.io/series/easy-ai/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+
+
+
+
+
+
+
+
+  <url>
+    <loc>https://oneplate-ai.github.io/posts/2026-09-04-easy-ai-02.html</loc>
+    <lastmod>2026-09-04T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://oneplate-ai.github.io/posts/2026-09-03-easy-ai-01.html</loc>
+    <lastmod>2026-09-03T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://oneplate-ai.github.io/posts/2026-09-02-today-ai-bite.html</loc>
+    <lastmod>2026-09-02T00:00:00+00:00</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>

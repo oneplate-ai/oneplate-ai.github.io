@@ -1,0 +1,70 @@
+
+/* Restored article typography and illustration scale */
+.series-page-layout article {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+}
+.series-page-layout article h1 {
+  margin: 0 0 18px;
+  font-family: var(--display);
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+  line-height: 1.3;
+}
+.series-page-layout article .post-kicker {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.series-page-layout article h2 {
+  margin: 56px 0 16px;
+  font-family: var(--display);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 400;
+  letter-spacing: -0.065em;
+  line-height: 1.3;
+}
+.series-page-layout article p { color: #3f493f; }
+.series-page-layout article blockquote {
+  margin: 24px 0 36px;
+  padding: 18px 20px;
+  border-left: 3px solid var(--accent);
+  background: #fbf8f1;
+  color: var(--muted);
+}
+.series-page-layout article ul { padding-left: 22px; color: #3f493f; }
+.series-page-layout article li { margin: 5px 0; }
+.series-page-layout article figure { margin: 32px 0 40px; text-align: center; }
+.series-page-layout article figure img {
+  display: block;
+  width: min(100%, 640px);
+  height: auto;
+  margin: 0 auto;
+}
+.source-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--green);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.summary { padding: 18px 20px; border-left: 3px solid var(--accent); background: #fbf8f1; }
+.sources { padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
+.sources li { overflow-wrap: anywhere; }
+html[data-theme="dark"] .series-page-layout article p,
+html[data-theme="dark"] .series-page-layout article ul { color: #c4cdc4; }
+html[data-theme="dark"] .series-page-layout article blockquote,
+html[data-theme="dark"] .summary { background: #252d27; color: #b8c2b8; }
+@media (max-width: 560px) {
+  .series-page-layout article figure img { width: 100%; }
+}
