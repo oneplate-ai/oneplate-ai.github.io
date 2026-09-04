@@ -40,12 +40,12 @@
     article figure img { display:block; width:min(100%, 560px); height:auto; margin:0 auto; border-radius:18px; }
     article blockquote { margin:24px 0 36px; padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; color:var(--muted); }
     .back { display:inline-block; color:var(--green); font-size:14px; text-decoration:none; }
-    @media (max-width:1160px) { .series-page-layout { width:min(760px, calc(100% - 40px)); } .series-archive { position:static; width:auto; margin-top:46px; } .post-header { gap:10px; } .post-brand .brand-logo.horizontal { width:145px; height:50px; } .post-theme-toggle { padding:8px 10px; } }
+    @media (max-width:1160px) { .series-page-layout { grid-template-columns:1fr; width:min(760px, calc(100% - 40px)); } .series-archive { position:static; width:auto; margin-top:46px; } .post-header { gap:10px; } .post-brand .brand-logo.horizontal { width:145px; height:50px; } .post-theme-toggle { padding:8px 10px; } }
     .summary { padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; }
 
-    .series-page-layout { position:relative; width:min(760px, calc(100% - 40px)); margin:0 auto; padding-top:65px; }
+    .series-page-layout { display:grid; grid-template-columns:minmax(0, 760px) 280px; gap:72px; width:min(1112px, calc(100% - 40px)); margin:0 auto; padding-top:65px; }
     .series-page-layout article { min-width:0; }
-    .series-archive { position:absolute; top:65px; left:calc(100% + 72px); width:280px; align-self:start; padding:24px; border:1px solid var(--line); }
+    .series-archive { position:sticky; top:24px; align-self:start; width:280px; padding:24px; border:1px solid var(--line); }
     .series-archive h2 { margin:0 0 20px; font-size:22px; }
     .series-archive-list { margin:0; padding:0; list-style:none; }
     .series-archive-list li { border-top:1px solid var(--line); }
