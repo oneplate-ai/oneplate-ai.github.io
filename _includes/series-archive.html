@@ -1,0 +1,15 @@
+<aside class="series-archive" aria-labelledby="archive-title">
+  <h2 id="archive-title">{{ page.series_title | default: '시리즈' }} 목록</h2>
+  <ol class="series-archive-list">
+    {% assign series_posts = site.posts | where: 'series', page.series %}
+    {% for post in series_posts %}
+      <li>
+        <a{% if post.url == page.url or (page.layout == 'series' and forloop.first) %} class="current"{% endif %} href="{% if page.layout == 'series' and forloop.first %}#latest{% else %}{{ post.url | relative_url }}{% endif %}">
+          <time datetime="{{ post.date | date: '%Y-%m-%d' }}">{{ post.date | date: '%Y. %m. %d' }}</time>
+          <strong>{{ post.title }}</strong>
+          <span>{% if post.url == page.url or (page.layout == 'series' and forloop.first) %}현재 읽고 있는 글{% else %}지난 글{% endif %}</span>
+        </a>
+      </li>
+    {% endfor %}
+  </ol>
+</aside>

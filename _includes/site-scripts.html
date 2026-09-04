@@ -1,0 +1,42 @@
+<script>
+  const themeToggle = document.querySelector('.theme-toggle');
+  const updateThemeButton = () => {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    themeToggle.setAttribute('aria-pressed', String(isDark));
+    themeToggle.setAttribute('aria-label', isDark ? '일반 모드로 전환' : '다크 모드로 전환');
+    themeToggle.querySelector('.theme-label').textContent = isDark ? '일반 모드' : '다크 모드';
+  };
+  updateThemeButton();
+  themeToggle.addEventListener('click', () => {
+    const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = nextTheme;
+    localStorage.setItem('ai-oneplate-theme', nextTheme);
+    updateThemeButton();
+  });
+
+  const siteHeader = document.querySelector('.site-header');
+  const menuToggle = document.querySelector('.menu-toggle');
+  const primaryNav = document.querySelector('#primary-nav');
+  menuToggle.addEventListener('click', () => {
+    const isOpen = siteHeader.classList.toggle('nav-open');
+    menuToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+  primaryNav.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      if (link.classList.contains('coming-soon-link')) {
+        event.preventDefault();
+        const message = document.querySelector('#coming-soon-message');
+        message.textContent = `${link.dataset.seriesName}는 준비중입니다.`;
+        const bounds = link.getBoundingClientRect();
+        const isMobile = window.matchMedia('(max-width: 720px)').matches;
+        message.style.left = `${isMobile ? window.innerWidth / 2 : bounds.left + bounds.width / 2}px`;
+        message.style.top = `${isMobile ? Math.min(bounds.bottom + 10, window.innerHeight - 80) : bounds.bottom + 10}px`;
+        message.hidden = false;
+        clearTimeout(window.comingSoonTimer);
+        window.comingSoonTimer = setTimeout(() => { message.hidden = true; }, 1500);
+      }
+      siteHeader.classList.remove('nav-open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+</script>

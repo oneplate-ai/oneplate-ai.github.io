@@ -17,7 +17,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Validate HTML, local assets, and sitemap
+      - name: Build generated site
+        run: docker compose run --rm jekyll bundle exec jekyll build --trace
+
+      - name: Validate generated HTML, local assets, and sitemap
+        working-directory: _site
         shell: python
         run: |
           import html.parser

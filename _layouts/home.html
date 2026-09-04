@@ -1,0 +1,66 @@
+---
+layout: default
+---
+<main id="content">
+  <section class="intro wrap">
+    <img class="hero-logo" src="{{ '/assets/brand/logo-basic-tight.png' | relative_url }}" alt="AI 한 접시">
+    <p class="eyebrow">AI 이야기를 담은 한접시</p>
+    <h1>AI를 쉽고 가볍게,<br><em>그러나 정확하게.</em></h1>
+    <p class="intro-copy">매일 쏟아지는 AI 소식 가운데 알아둘 만한 변화를 골라,<br>처음 AI를 배우고 사용하는 사람의 언어로 기록합니다.</p>
+  </section>
+
+  {% assign latest = site.posts | first %}
+  <section id="latest" class="latest wrap" aria-labelledby="latest-title">
+    <div class="section-heading compact">
+      <div><h2 id="latest-title">최근에 차려진 글</h2></div>
+    </div>
+    {% if latest %}
+      <a class="featured-post" href="{{ latest.url | relative_url }}">
+        <div class="featured-meta"><span>{{ latest.series_title }} · {{ latest.episode }}번째 접시</span><time datetime="{{ latest.date | date: '%Y-%m-%d' }}">{{ latest.date | date: '%Y. %m. %d' }}</time></div>
+        <div class="featured-body">
+          <div><h3>{{ latest.title }}</h3><p>{{ latest.description }}</p></div>
+          <span class="arrow" aria-hidden="true">↗</span>
+        </div>
+      </a>
+    {% endif %}
+  </section>
+
+  <section id="corners" class="series-menu wrap" aria-labelledby="corners-title">
+    <div class="section-heading compact"><div><h2 id="corners-title">AI를 담아보는 다섯 가지 접시</h2></div></div>
+    <div class="series-grid">
+      {% for series in site.data.series %}
+        {% assign series_posts = site.posts | where: 'series', series.slug %}
+        {% assign series_latest = series_posts | first %}
+        {% if series_latest %}
+          <a class="series-item" href="{{ '/series/' | append: series.slug | append: '/' | relative_url }}">
+            <span class="series-label">발행 중</span>
+            <strong>{{ series.title }}</strong>
+            <span>{{ series.description }}</span>
+            <span class="coming-soon">{{ series_posts.size }}개 글 읽기</span>
+          </a>
+        {% else %}
+          <a class="series-item coming-soon-link" href="#coming-soon-message" data-series-name="{{ series.title }}">
+            <span class="series-label">준비 중</span>
+            <strong>{{ series.title }}</strong>
+            <span>{{ series.description }}</span>
+            <span class="coming-soon">곧 시작합니다</span>
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+
+  <section id="principles" class="principles">
+    <div class="wrap principle-layout">
+      <div>
+        <p class="eyebrow">한 접시에 담는 기준</p>
+        <h2>신속하게 차려내되,<br />검증된 내용만 그릇에 담습니다.</h2>
+      </div>
+      <ul>
+        <li><strong>원산지</strong><br />카더라가 아닌 공식 발표 자료를 주재료로 쓰고, 원문 링크를 곁들입니다.</li>
+        <li><strong>확인일자</strong><br />변동되기 쉬운 이용 조건과 가격 정보는 직접 확인한 날짜를 적어둡니다.</li>
+        <li><strong>재료표기</strong><br />확인된 사실과 필자의 해석, 아직 확인되지 않은 영역을 분명히 나누어 적습니다.</li>
+      </ul>
+    </div>
+  </section>
+</main>

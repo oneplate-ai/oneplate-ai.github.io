@@ -1,0 +1,21 @@
+name: Jekyll build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  jekyll-build:
+    name: jekyll-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build with the project Docker image
+        run: docker compose run --rm jekyll bundle exec jekyll build --trace
