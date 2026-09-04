@@ -18,7 +18,7 @@
     .series-page-header { display:flex; align-items:center; gap:18px; padding-bottom:0; border-bottom:1px solid var(--line); }
     .series-page-header .brand-logo { width:170px; height:58px; }
     .series-page-back { color:var(--green); font-size:14px; text-decoration:none; }
-    .series-page-layout { display:grid; grid-template-columns:minmax(0, 1fr) 280px; gap:72px; padding-top:65px; }
+    .series-page-layout { position:relative; width:min(760px, calc(100% - 40px)); margin:0 auto; padding-top:65px; }
     .series-page article { min-width:0; }
     .series-page .post-kicker { margin:0 0 10px; color:var(--accent); font-size:14px; font-weight:700; letter-spacing:.04em; }
     .latest-label { display:inline-block; margin-bottom:18px; padding:5px 10px; border:1px solid var(--line); border-radius:99px; color:var(--muted); font-size:12px; }
@@ -33,7 +33,7 @@
     .series-page .summary { padding:18px 20px; border-left:3px solid var(--accent); background:#fbf8f1; }
     .series-page .sources { padding-top:12px; border-top:1px solid var(--line); font-size:14px; }
     .series-page .sources li { overflow-wrap:anywhere; }
-    .series-archive { align-self:start; padding:24px; border:1px solid var(--line); }
+    .series-archive { position:absolute; top:65px; left:calc(100% + 72px); width:280px; align-self:start; padding:24px; border:1px solid var(--line); }
     .series-archive h2 { margin:0 0 20px; font-size:22px; }
     .series-archive p { margin:0 0 20px; color:var(--muted); font-size:13px; }
     .series-archive-list { margin:0; padding:0; list-style:none; }
@@ -45,9 +45,9 @@
     .series-archive-list span { display:block; margin-top:3px; color:var(--muted); font-size:12px; }
     html[data-theme="dark"] .series-page article p, html[data-theme="dark"] .series-page article ul { color:#c4cdc4; }
     html[data-theme="dark"] .series-page article blockquote, html[data-theme="dark"] .series-page .summary { background:#252d27; color:#b8c2b8; }
-    @media (max-width:760px) {
-      .series-page-layout { grid-template-columns:1fr; gap:46px; padding-top:65px; }
-      .series-archive { order:2; }
+    @media (max-width:1160px) {
+      .series-page-layout { width:min(760px, calc(100% - 40px)); }
+      .series-archive { position:static; width:auto; margin-top:46px; }
       .series-page-header .brand-logo { width:145px; height:50px; }
     }
   </style>
