@@ -1,10 +1,12 @@
 ---
 layout: default
 ---
+{% assign series_posts = site.posts | where: 'series', page.series %}
+{% assign latest = series_posts | first %}
 <main id="content" class="series-page">
   <div class="series-page-layout">
     <article id="latest">
-      {{ content }}
+      {{ latest.content }}
     </article>
     {% include series-archive.html %}
   </div>

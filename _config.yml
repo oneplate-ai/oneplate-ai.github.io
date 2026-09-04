@@ -20,3 +20,5 @@ exclude:
   - PUBLISHING_RULES.md
   - docs/
   - posts/
+  - series/easy-ai/index.html
+  - series/today-ai-bite/index.html
