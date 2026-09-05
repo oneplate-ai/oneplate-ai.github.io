@@ -1,7 +1,8 @@
 ---
 title: 2026년 8월 29일 - 2026년 9월 4일
-series: weekly-ai-oneplate
+series: weekly-ai
 series_title: 이번 주 AI 한 접시
+episode: 1
 week: 2026-08-31/2026-09-04
 date: 2026-09-04
 description: 2026년 8월 31일부터 9월 4일까지 실제 공개된 AI 한입의 주요 흐름을 정리한 주간 초안입니다.
