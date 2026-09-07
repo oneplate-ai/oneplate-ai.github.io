@@ -7,7 +7,7 @@ import html
 import re
 from pathlib import Path
 
-POST_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(?P<series>.+)-\d+\.html$")
+POST_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(?P<series>.+?)(?:-\d+)?\.html$")
 TITLE_RE = re.compile(r'<h1>(.*?)</h1>', re.S)
 KICKER_RE = re.compile(r'<p class="post-kicker">(.*?)</p>', re.S)
 ARTICLE_RE = re.compile(r'(<article)(?P<attrs>[^>]*)>(?P<body>.*?)</article>', re.S)
