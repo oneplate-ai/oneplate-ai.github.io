@@ -272,12 +272,27 @@ html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148;
   white-space: nowrap;
 }
 .summary { padding: 18px 20px; border-left: 3px solid var(--accent); background: #fbf8f1; }
+.verification-note {
+  margin: 20px 0 28px;
+  padding: 10px 14px;
+  border-left: 2px solid #d6ddd2;
+  background: #fafbf8;
+  color: #758075;
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.7;
+}
 .sources { padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
 .sources li { overflow-wrap: anywhere; }
 html[data-theme="dark"] .series-page-layout article p,
 html[data-theme="dark"] .series-page-layout article ul { color: #c4cdc4; }
 html[data-theme="dark"] .series-page-layout article blockquote,
 html[data-theme="dark"] .summary { background: #252d27; color: #b8c2b8; }
+html[data-theme="dark"] .verification-note {
+  border-left-color: #4b5b4c;
+  background: #202720;
+  color: #aab4aa;
+}
 @media (max-width: 560px) {
   .series-page-layout article figure img { width: 100%; }
 }

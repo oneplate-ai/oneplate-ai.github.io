@@ -33,7 +33,7 @@ layout: post
 <h2>Today in one sentence</h2>
 <p class="summary">Today’s three updates show AI reaching beyond a single service into multi-step work, weather forecasting, and developer tools.<br />More than a feature name, it is worth checking who can use it, how far the rollout has progressed, and what the cost and safety conditions are.<br /></p>
 
-<p class="verification-note">This post focuses on official materials published between 7:00 PM on September 2 and 10:00 AM on September 4, 2026, Korea Standard Time.<br />GPT-6 Astra was confirmed through OpenAI’s official announcement, but its rollout was limited as of September 4, 2026, Korea Standard Time, rather than fully complete.<br />Performance, accuracy, and pricing claims from OpenAI, Google, and GitHub are their own statements and should be distinguished from independent verification.<br />Availability and pricing may change after publication.<br /></p>
+<p class="verification-note">This article is based on official materials released by OpenAI, Google DeepMind, and GitHub on September 3.<br />GPT-6 Astra and Gemini 3.8 Flash are rolling out gradually, so actual availability, pricing, and policies should be checked again before publication.<br /></p>
 
 <h2>Sources</h2>
 <ol class="sources">
