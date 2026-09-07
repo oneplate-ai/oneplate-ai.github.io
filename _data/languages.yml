@@ -1,0 +1,8 @@
+ko:
+  label: 한국어
+  flag: 🇰🇷
+  home: /
+en:
+  label: English
+  flag: 🇺🇸
+  home: /en/

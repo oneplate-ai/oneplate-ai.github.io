@@ -1,0 +1,28 @@
+ko:
+  site_name: AI 한 접시
+  brand_home_label: AI 한 접시 홈
+  menu: 메뉴
+  primary_navigation: 주요 메뉴
+  theme_to_dark: 다크 모드로 전환
+  theme_to_light: 일반 모드로 전환
+  theme_dark: 다크 모드
+  theme_light: 일반 모드
+  language_select: 언어 선택
+  coming_soon: "{series}는 준비 중입니다."
+  now_reading: 현재 읽고 있는 글
+  previous_post: 지난 글
+  archive_suffix: 목록
+en:
+  site_name: AI One Plate
+  brand_home_label: AI One Plate home
+  menu: Menu
+  primary_navigation: Primary navigation
+  theme_to_dark: Switch to dark mode
+  theme_to_light: Switch to light mode
+  theme_dark: Dark mode
+  theme_light: Light mode
+  language_select: Choose language
+  coming_soon: "{series} is coming soon."
+  now_reading: Reading now
+  previous_post: Earlier post
+  archive_suffix: archive

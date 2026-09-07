@@ -1,0 +1,32 @@
+{% assign current_lang = page.lang | default: site.lang | default: 'ko' %}
+{% if current_lang == 'ko-KR' %}{% assign current_lang = 'ko' %}{% endif %}
+{% assign current_language = site.data.languages[current_lang] | default: site.data.languages.ko %}
+{% assign ui = site.data.ui[current_lang] | default: site.data.ui.ko %}
+{% assign ko_url = site.data.languages.ko.home %}
+{% assign en_url = site.data.languages.en.home %}
+{% if page.translation_key %}
+  {% assign translation_posts = site.posts | where: 'translation_key', page.translation_key %}
+  {% assign ko_post = translation_posts | where: 'lang', 'ko' | first %}
+  {% assign en_post = translation_posts | where: 'lang', 'en' | first %}
+  {% assign translation_pages = site.pages | where: 'translation_key', page.translation_key %}
+  {% assign ko_page = translation_pages | where: 'lang', 'ko' | first %}
+  {% assign en_page = translation_pages | where: 'lang', 'en' | first %}
+  {% if ko_post %}{% assign ko_url = ko_post.url %}{% elsif ko_page %}{% assign ko_url = ko_page.url %}{% endif %}
+  {% if en_post %}{% assign en_url = en_post.url %}{% elsif en_page %}{% assign en_url = en_page.url %}{% endif %}
+{% endif %}
+<div class="language-switcher">
+  <button class="language-toggle" type="button" aria-expanded="false" aria-controls="language-menu" aria-label="{{ ui.language_select }}">
+    <span class="language-flag" aria-hidden="true">{{ current_language.flag }}</span>
+    <span class="sr-only">{{ current_language.label }}</span>
+  </button>
+  <div id="language-menu" class="language-menu" hidden>
+    <a href="{{ ko_url | relative_url }}"{% if current_lang == 'ko' %} aria-current="true"{% endif %}>
+      <span aria-hidden="true">{{ site.data.languages.ko.flag }}</span>
+      <span>{{ site.data.languages.ko.label }}</span>
+    </a>
+    <a href="{{ en_url | relative_url }}"{% if current_lang == 'en' %} aria-current="true"{% endif %}>
+      <span aria-hidden="true">{{ site.data.languages.en.flag }}</span>
+      <span>{{ site.data.languages.en.label }}</span>
+    </a>
+  </div>
+</div>

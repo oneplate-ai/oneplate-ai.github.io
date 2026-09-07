@@ -5,26 +5,41 @@ permalink: /sitemap.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>{{ site.url }}{{ '/' | relative_url }}</loc>
+    <loc>{{ '/' | absolute_url }}</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  {% for series in site.data.series %}
-    {% assign series_posts = site.posts | where: 'series', series.slug %}
-    {% if series_posts.size > 0 %}
   <url>
-    <loc>{{ site.url }}{{ '/series/' | append: series.slug | append: '/' | relative_url }}</loc>
+    <loc>{{ '/en/' | absolute_url }}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  {% for series in site.data.series %}
+    {% assign ko_posts = site.posts | where: 'series', series.slug | where: 'lang', 'ko' %}
+    {% assign en_posts = site.posts | where: 'series', series.slug | where: 'lang', 'en' %}
+    {% if ko_posts.size > 0 %}
+  <url>
+    <loc>{{ '/series/' | append: series.slug | append: '/' | absolute_url }}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+    {% endif %}
+    {% if en_posts.size > 0 %}
+  <url>
+    <loc>{{ '/en/series/' | append: series.slug | append: '/' | absolute_url }}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
     {% endif %}
   {% endfor %}
   {% for post in site.posts %}
+    {% if post.published != false %}
   <url>
-    <loc>{{ site.url }}{{ post.url | relative_url }}</loc>
+    <loc>{{ post.url | absolute_url }}</loc>
     <lastmod>{{ post.date | date_to_xmlschema }}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+    {% endif %}
   {% endfor %}
 </urlset>

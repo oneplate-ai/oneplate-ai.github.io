@@ -3,8 +3,8 @@
   const updateThemeButton = () => {
     const isDark = document.documentElement.dataset.theme === 'dark';
     themeToggle.setAttribute('aria-pressed', String(isDark));
-    themeToggle.setAttribute('aria-label', isDark ? '일반 모드로 전환' : '다크 모드로 전환');
-    themeToggle.querySelector('.theme-label').textContent = isDark ? '일반 모드' : '다크 모드';
+    themeToggle.setAttribute('aria-label', isDark ? themeToggle.dataset.themeToLight : themeToggle.dataset.themeToDark);
+    themeToggle.querySelector('.theme-label').textContent = isDark ? themeToggle.dataset.themeLightLabel : themeToggle.dataset.themeDarkLabel;
   };
   updateThemeButton();
   themeToggle.addEventListener('click', () => {
@@ -12,6 +12,29 @@
     document.documentElement.dataset.theme = nextTheme;
     localStorage.setItem('ai-oneplate-theme', nextTheme);
     updateThemeButton();
+  });
+
+  const languageSwitcher = document.querySelector('.language-switcher');
+  const languageToggle = document.querySelector('.language-toggle');
+  const languageMenu = document.querySelector('#language-menu');
+  const closeLanguageMenu = () => {
+    languageMenu.hidden = true;
+    languageToggle.setAttribute('aria-expanded', 'false');
+  };
+  const toggleLanguageMenu = () => {
+    const isOpen = !languageMenu.hidden;
+    languageMenu.hidden = isOpen;
+    languageToggle.setAttribute('aria-expanded', String(!isOpen));
+  };
+  languageToggle.addEventListener('click', toggleLanguageMenu);
+  document.addEventListener('click', (event) => {
+    if (!languageSwitcher.contains(event.target)) closeLanguageMenu();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeLanguageMenu();
+      languageToggle.focus();
+    }
   });
 
   const siteHeader = document.querySelector('.site-header');
@@ -26,7 +49,8 @@
       if (link.classList.contains('coming-soon-link')) {
         event.preventDefault();
         const message = document.querySelector('#coming-soon-message');
-        message.textContent = `${link.dataset.seriesName}는 준비중입니다.`;
+        const template = siteHeader.dataset.comingSoonTemplate;
+        message.textContent = template.replace('{series}', link.dataset.seriesName);
         const bounds = link.getBoundingClientRect();
         const isMobile = window.matchMedia('(max-width: 720px)').matches;
         message.style.left = `${isMobile ? window.innerWidth / 2 : bounds.left + bounds.width / 2}px`;

@@ -1,49 +1,62 @@
 ---
 layout: default
 ---
+{% assign current_lang = page.lang | default: 'ko' %}
+{% assign localized_posts = site.posts | where: 'lang', current_lang %}
+{% assign latest = localized_posts | first %}
+{% assign series_prefix = '/series/' %}
+{% if current_lang == 'en' %}{% assign series_prefix = '/en/series/' %}{% endif %}
 <main id="content">
   <section class="intro wrap">
-    <img class="hero-logo" src="{{ '/assets/brand/logo-basic-tight.png' | relative_url }}" alt="AI 한 접시">
-    <p class="eyebrow">AI 이야기를 담은 한접시</p>
-    <h1>AI를 쉽고 가볍게,<br><em>그러나 정확하게.</em></h1>
-    <p class="intro-copy">매일 쏟아지는 AI 소식 가운데 알아둘 만한 변화를 골라,<br>처음 AI를 배우고 사용하는 사람의 언어로 담습니다.</p>
+    <img class="hero-logo" src="{{ '/assets/brand/logo-basic-tight.png' | relative_url }}" alt="{% if current_lang == 'en' %}AI One Plate{% else %}AI 한 접시{% endif %}">
+    {% if current_lang == 'en' %}
+      <p class="eyebrow">AI stories, served simply</p>
+      <h1>AI made clear,<br><em>and kept grounded.</em></h1>
+      <p class="intro-copy">We select AI changes worth knowing and explain them in plain language for people beginning to learn and use AI.</p>
+    {% else %}
+      <p class="eyebrow">AI 이야기를 담은 한접시</p>
+      <h1>AI를 쉽고 가볍게,<br><em>그러나 정확하게.</em></h1>
+      <p class="intro-copy">매일 쏟아지는 AI 소식 가운데 알아둘 만한 변화를 골라,<br>처음 AI를 배우고 사용하는 사람의 언어로 담습니다.</p>
+    {% endif %}
   </section>
 
-  {% assign latest = site.posts | first %}
   <section id="latest" class="latest wrap" aria-labelledby="latest-title">
     <div class="section-heading compact">
-      <div><h2 id="latest-title">최근에 차려진 글</h2></div>
+      <div><h2 id="latest-title">{% if current_lang == 'en' %}Recently served{% else %}최근에 차려진 글{% endif %}</h2></div>
     </div>
     {% if latest %}
       <a class="featured-post" href="{{ latest.url | relative_url }}">
-        <div class="featured-meta"><span>{{ latest.series_title }} · {{ latest.episode }}번째 접시</span><time datetime="{{ latest.date | date: '%Y-%m-%d' }}">{{ latest.date | date: '%Y. %m. %d' }}</time></div>
+        <div class="featured-meta"><span>{{ latest.series_title }} · {{ latest.episode }}{% if current_lang == 'en' %}{% if latest.episode == 1 %}st{% elsif latest.episode == 2 %}nd{% elsif latest.episode == 3 %}rd{% else %}th{% endif %} course{% else %}번째 접시{% endif %}</span><time datetime="{{ latest.date | date: '%Y-%m-%d' }}">{{ latest.date | date: '%Y. %m. %d' }}</time></div>
         <div class="featured-body">
           <div><h3>{{ latest.title }}</h3><p>{{ latest.description }}</p></div>
           <span class="arrow" aria-hidden="true">↗</span>
         </div>
       </a>
+    {% else %}
+      <p class="empty-state">{% if current_lang == 'en' %}The first English stories are being prepared.{% else %}첫 글을 준비하고 있습니다.{% endif %}</p>
     {% endif %}
   </section>
 
   <section id="corners" class="series-menu wrap" aria-labelledby="corners-title">
-    <div class="section-heading compact"><div><h2 id="corners-title">AI를 담아보는 다섯 가지 접시</h2></div></div>
+    <div class="section-heading compact"><div><h2 id="corners-title">{% if current_lang == 'en' %}Five ways to explore AI{% else %}AI를 담아보는 다섯 가지 접시{% endif %}</h2></div></div>
     <div class="series-grid">
       {% for series in site.data.series %}
-        {% assign series_posts = site.posts | where: 'series', series.slug %}
+        {% assign series_copy = series.translations[current_lang] | default: series.translations.ko %}
+        {% assign series_posts = localized_posts | where: 'series', series.slug %}
         {% assign series_latest = series_posts | first %}
         {% if series_latest %}
-          <a class="series-item" href="{{ '/series/' | append: series.slug | append: '/' | relative_url }}">
-            <span class="series-label">발행 중</span>
-            <strong>{{ series.title }}</strong>
-            <span>{{ series.description }}</span>
-            <span class="coming-soon">{{ series_posts.size }}개 글 읽기</span>
+          <a class="series-item" href="{{ series_prefix | append: series.slug | append: '/' | relative_url }}">
+            <span class="series-label">{% if current_lang == 'en' %}PUBLISHED{% else %}발행 중{% endif %}</span>
+            <strong>{{ series_copy.title }}</strong>
+            <span>{{ series_copy.description }}</span>
+            <span class="coming-soon">{% if current_lang == 'en' %}{{ series_posts.size }} {% if series_posts.size == 1 %}story{% else %}stories{% endif %}{% else %}{{ series_posts.size }}개 글 읽기{% endif %}</span>
           </a>
         {% else %}
-          <a class="series-item coming-soon-link" href="#coming-soon-message" data-series-name="{{ series.title }}">
-            <span class="series-label">준비 중</span>
-            <strong>{{ series.title }}</strong>
-            <span>{{ series.description }}</span>
-            <span class="coming-soon">곧 시작합니다</span>
+          <a class="series-item coming-soon-link" href="#coming-soon-message" data-series-name="{{ series_copy.title }}">
+            <span class="series-label">{% if current_lang == 'en' %}COMING SOON{% else %}준비 중{% endif %}</span>
+            <strong>{{ series_copy.title }}</strong>
+            <span>{{ series_copy.description }}</span>
+            <span class="coming-soon">{% if current_lang == 'en' %}Coming soon{% else %}곧 시작합니다{% endif %}</span>
           </a>
         {% endif %}
       {% endfor %}
@@ -52,15 +65,27 @@ layout: default
 
   <section id="principles" class="principles">
     <div class="wrap principle-layout">
-      <div>
-        <p class="eyebrow">한 접시에 담는 기준</p>
-        <h2>신속하게 차려내되,<br />검증된 내용만 그릇에 담습니다.</h2>
-      </div>
-      <ul>
-        <li><strong>원산지</strong><br />카더라가 아닌 공식 발표 자료를 주재료로 쓰고, 원문 링크를 곁들입니다.</li>
-        <li><strong>확인일자</strong><br />변동되기 쉬운 이용 조건과 가격 정보는 직접 확인한 날짜를 적어둡니다.</li>
-        <li><strong>재료표기</strong><br />확인된 사실과 필자의 해석, 아직 확인되지 않은 영역을 분명히 나누어 적습니다.</li>
-      </ul>
+      {% if current_lang == 'en' %}
+        <div>
+          <p class="eyebrow">How we choose what to serve</p>
+          <h2>Quick to publish,<br />careful about what we put on the plate.</h2>
+        </div>
+        <ul>
+          <li><strong>Primary sources</strong><br />We start with official announcements and original documentation, then link to them directly.</li>
+          <li><strong>Check date</strong><br />For details that change, such as price and availability, we state when we checked them.</li>
+          <li><strong>Clear labels</strong><br />We distinguish verified facts, our interpretation, and what remains uncertain.</li>
+        </ul>
+      {% else %}
+        <div>
+          <p class="eyebrow">한 접시에 담는 기준</p>
+          <h2>신속하게 차려내되,<br />검증된 내용만 그릇에 담습니다.</h2>
+        </div>
+        <ul>
+          <li><strong>원산지</strong><br />카더라가 아닌 공식 발표 자료를 주재료로 쓰고, 원문 링크를 곁들입니다.</li>
+          <li><strong>확인일자</strong><br />변동되기 쉬운 이용 조건과 가격 정보는 직접 확인한 날짜를 적어둡니다.</li>
+          <li><strong>재료표기</strong><br />확인된 사실과 필자의 해석, 아직 확인되지 않은 영역을 분명히 나누어 적습니다.</li>
+        </ul>
+      {% endif %}
     </div>
   </section>
 </main>

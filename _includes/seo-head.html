@@ -1,0 +1,33 @@
+{% assign current_lang = page.lang | default: 'ko' %}
+{% assign meta_title = page.title | default: site.title %}
+{% assign meta_description = page.description | default: site.description %}
+{% if current_lang == 'en' and page.description == nil %}
+  {% assign meta_description = 'Clear, grounded AI stories and beginner-friendly explanations from AI One Plate.' %}
+{% endif %}
+{% assign page_type = 'website' %}
+{% if page.layout == 'post' %}{% assign page_type = 'article' %}{% endif %}
+<link rel="canonical" href="{{ page.url | absolute_url }}">
+<meta property="og:locale" content="{% if current_lang == 'en' %}en_US{% else %}ko_KR{% endif %}">
+{% if current_lang == 'en' %}<meta property="og:locale:alternate" content="ko_KR">{% else %}<meta property="og:locale:alternate" content="en_US">{% endif %}
+<meta property="og:type" content="{{ page_type }}">
+<meta property="og:title" content="{{ meta_title | escape }}">
+<meta property="og:description" content="{{ meta_description | escape }}">
+<meta property="og:url" content="{{ page.url | absolute_url }}">
+<meta property="og:site_name" content="{% if current_lang == 'en' %}AI One Plate{% else %}{{ site.title | escape }}{% endif %}">
+<meta property="og:image" content="{{ '/assets/brand/logo-basic-tight.png' | absolute_url }}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{{ meta_title | escape }}">
+<meta name="twitter:description" content="{{ meta_description | escape }}">
+{% if page.translation_key %}
+  {% assign translation_posts = site.posts | where: 'translation_key', page.translation_key %}
+  {% assign ko_post = translation_posts | where: 'lang', 'ko' | first %}
+  {% assign en_post = translation_posts | where: 'lang', 'en' | first %}
+  {% assign translation_pages = site.pages | where: 'translation_key', page.translation_key %}
+  {% assign ko_page = translation_pages | where: 'lang', 'ko' | first %}
+  {% assign en_page = translation_pages | where: 'lang', 'en' | first %}
+  {% if ko_post %}{% assign ko_href = ko_post.url %}{% elsif ko_page %}{% assign ko_href = ko_page.url %}{% endif %}
+  {% if en_post %}{% assign en_href = en_post.url %}{% elsif en_page %}{% assign en_href = en_page.url %}{% endif %}
+  {% if ko_href %}<link rel="alternate" hreflang="ko-KR" href="{{ ko_href | absolute_url }}">{% endif %}
+  {% if en_href %}<link rel="alternate" hreflang="en" href="{{ en_href | absolute_url }}">{% endif %}
+  {% if page.translation_key == 'home' %}<link rel="alternate" hreflang="x-default" href="{{ '/' | absolute_url }}">{% endif %}
+{% endif %}

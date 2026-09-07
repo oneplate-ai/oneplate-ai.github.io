@@ -2,6 +2,8 @@
 title: 2026년 8월 29일 - 2026년 9월 4일
 series: weekly-ai
 series_title: 이번 주 AI 한 접시
+lang: ko
+translation_key: weekly-ai-2026-09-04
 episode: 1
 week: 2026-08-31/2026-09-04
 date: 2026-09-04

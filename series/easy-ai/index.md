@@ -1,5 +1,7 @@
 ---
 layout: series
+lang: ko
+translation_key: series-easy-ai
 title: 쉽게 먹는 AI | AI 한 접시
 series: easy-ai
 series_title: 쉽게 먹는 AI

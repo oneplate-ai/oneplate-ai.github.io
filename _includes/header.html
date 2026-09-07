@@ -1,17 +1,28 @@
-<header class="site-header">
-  <a class="brand" href="{{ '/' | relative_url }}" aria-label="AI 한 접시 홈">
-    <img class="brand-logo horizontal" src="{{ '/assets/brand/logo-horizontal-tight.png' | relative_url }}" alt="AI 한 접시">
+{% assign current_lang = page.lang | default: site.lang | default: 'ko' %}
+{% if current_lang == 'ko-KR' %}{% assign current_lang = 'ko' %}{% endif %}
+{% assign ui = site.data.ui[current_lang] | default: site.data.ui.ko %}
+{% assign current_language = site.data.languages[current_lang] | default: site.data.languages.ko %}
+{% assign current_series_prefix = '/series/' %}
+{% if current_lang == 'en' %}{% assign current_series_prefix = '/en/series/' %}{% endif %}
+<header class="site-header" data-coming-soon-template="{{ ui.coming_soon }}">
+  <a class="brand" href="{{ current_language.home | relative_url }}" aria-label="{{ ui.brand_home_label }}">
+    <img class="brand-logo horizontal" src="{{ '/assets/brand/logo-horizontal-tight.png' | relative_url }}" alt="{{ ui.site_name }}">
   </a>
-  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">메뉴</button>
-  <nav id="primary-nav" aria-label="주요 메뉴">
-    <a href="{{ '/series/today-ai-bite/' | relative_url }}">오늘 AI 한입</a>
-    <a href="{{ '/series/weekly-ai/' | relative_url }}">주간 AI 한 접시</a>
-    <a href="{{ '/series/easy-ai/' | relative_url }}">쉽게 먹는 AI</a>
-    <a class="coming-soon-link" href="#coming-soon-message" data-series-name="골라 먹는 AI">골라 먹는 AI</a>
-    <a class="coming-soon-link" href="#coming-soon-message" data-series-name="깊은 맛 AI">깊은 맛 AI</a>
+  <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">{{ ui.menu }}</button>
+  <nav id="primary-nav" aria-label="{{ ui.primary_navigation }}">
+    {% for series in site.data.series %}
+      {% assign series_copy = series.translations[current_lang] | default: series.translations.ko %}
+      {% assign series_posts = site.posts | where: 'series', series.slug | where: 'lang', current_lang %}
+      {% if series_posts.size > 0 %}
+        <a href="{{ current_series_prefix | append: series.slug | append: '/' | relative_url }}">{{ series_copy.title }}</a>
+      {% else %}
+        <a class="coming-soon-link" href="#coming-soon-message" data-series-name="{{ series_copy.title }}">{{ series_copy.title }}</a>
+      {% endif %}
+    {% endfor %}
   </nav>
-  <button class="theme-toggle" type="button" aria-pressed="false" aria-label="다크 모드로 전환">
-    <span aria-hidden="true">◐</span><span class="theme-label">다크 모드</span>
+  <button class="theme-toggle" type="button" aria-pressed="false" aria-label="{{ ui.theme_to_dark }}" data-theme-to-dark="{{ ui.theme_to_dark }}" data-theme-to-light="{{ ui.theme_to_light }}" data-theme-dark-label="{{ ui.theme_dark }}" data-theme-light-label="{{ ui.theme_light }}">
+    <span aria-hidden="true">◐</span><span class="theme-label">{{ ui.theme_dark }}</span>
   </button>
+  {% include language-switcher.html %}
   <p id="coming-soon-message" class="coming-soon-message" role="status" aria-live="polite" hidden></p>
 </header>

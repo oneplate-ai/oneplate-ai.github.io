@@ -2,6 +2,8 @@
 title: 2026년 9월 2일
 series: today-ai-bite
 series_title: 오늘 AI 한입
+lang: ko
+translation_key: today-ai-bite-2026-09-02
 episode: 1
 date: 2026-09-02
 permalink: /posts/2026-09-02-today-ai-bite.html
