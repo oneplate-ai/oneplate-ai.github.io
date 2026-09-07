@@ -6,7 +6,7 @@
 {% if current_lang == 'en' %}{% assign current_series_prefix = '/en/series/' %}{% endif %}
 <header class="site-header" data-coming-soon-template="{{ ui.coming_soon }}">
   <a class="brand" href="{{ current_language.home | relative_url }}" aria-label="{{ ui.brand_home_label }}">
-    <img class="brand-logo horizontal" src="{{ '/assets/brand/logo-horizontal-tight.png' | relative_url }}" alt="{{ ui.site_name }}">
+    <img class="brand-logo horizontal" src="{% if current_lang == 'en' %}{{ '/assets/brand/logo-horizontal-en.png' | relative_url }}{% else %}{{ '/assets/brand/logo-horizontal-tight.png' | relative_url }}{% endif %}" alt="{{ ui.site_name }}">
   </a>
   <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">{{ ui.menu }}</button>
   <nav id="primary-nav" aria-label="{{ ui.primary_navigation }}">

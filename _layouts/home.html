@@ -8,7 +8,7 @@ layout: default
 {% if current_lang == 'en' %}{% assign series_prefix = '/en/series/' %}{% endif %}
 <main id="content">
   <section class="intro wrap">
-    <img class="hero-logo" src="{{ '/assets/brand/logo-basic-tight.png' | relative_url }}" alt="{% if current_lang == 'en' %}AI One Plate{% else %}AI 한 접시{% endif %}">
+    <img class="hero-logo" src="{% if current_lang == 'en' %}{{ '/assets/brand/logo-basic-en.png' | relative_url }}{% else %}{{ '/assets/brand/logo-basic-tight.png' | relative_url }}{% endif %}" alt="{% if current_lang == 'en' %}AI One Plate{% else %}AI 한 접시{% endif %}">
     {% if current_lang == 'en' %}
       <p class="eyebrow">AI stories, served simply</p>
       <h1>AI made clear,<br><em>and kept grounded.</em></h1>
