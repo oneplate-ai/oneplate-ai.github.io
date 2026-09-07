@@ -20,6 +20,9 @@ jobs:
       - name: Build generated site
         run: docker compose run --rm jekyll bundle exec jekyll build --trace
 
+      - name: Validate bilingual publication pairs
+        run: docker compose run --rm jekyll ruby scripts/validate_bilingual_publication.rb
+
       - name: Validate generated HTML, local assets, and sitemap
         working-directory: _site
         shell: python
