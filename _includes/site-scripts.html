@@ -44,21 +44,19 @@
     const isOpen = siteHeader.classList.toggle('nav-open');
     menuToggle.setAttribute('aria-expanded', String(isOpen));
   });
-  primaryNav.querySelectorAll('a').forEach((link) => {
+  document.querySelectorAll('.coming-soon-link').forEach((link) => {
     link.addEventListener('click', (event) => {
-      if (link.classList.contains('coming-soon-link')) {
-        event.preventDefault();
-        const message = document.querySelector('#coming-soon-message');
-        const template = siteHeader.dataset.comingSoonTemplate;
-        message.textContent = template.replace('{series}', link.dataset.seriesName);
-        const bounds = link.getBoundingClientRect();
-        const isMobile = window.matchMedia('(max-width: 720px)').matches;
-        message.style.left = `${isMobile ? window.innerWidth / 2 : bounds.left + bounds.width / 2}px`;
-        message.style.top = `${isMobile ? Math.min(bounds.bottom + 10, window.innerHeight - 80) : bounds.bottom + 10}px`;
-        message.hidden = false;
-        clearTimeout(window.comingSoonTimer);
-        window.comingSoonTimer = setTimeout(() => { message.hidden = true; }, 1500);
-      }
+      event.preventDefault();
+      const message = document.querySelector('#coming-soon-message');
+      const template = siteHeader.dataset.comingSoonTemplate;
+      message.textContent = template.replace('{series}', link.dataset.seriesName);
+      const bounds = link.getBoundingClientRect();
+      const isMobile = window.matchMedia('(max-width: 720px)').matches;
+      message.style.left = `${isMobile ? window.innerWidth / 2 : bounds.left + bounds.width / 2}px`;
+      message.style.top = `${isMobile ? Math.min(bounds.bottom + 10, window.innerHeight - 80) : bounds.bottom + 10}px`;
+      message.hidden = false;
+      clearTimeout(window.comingSoonTimer);
+      window.comingSoonTimer = setTimeout(() => { message.hidden = true; }, 1500);
       siteHeader.classList.remove('nav-open');
       menuToggle.setAttribute('aria-expanded', 'false');
     });
