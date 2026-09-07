@@ -24,6 +24,9 @@
   <a class="skip-link" href="#content">{% if page.lang == 'en' %}Skip to content{% else %}본문으로 건너뛰기{% endif %}</a>
   {% include header.html %}
   {{ content }}
+  <button class="back-to-top" type="button" aria-label="{% if page.lang == 'en' %}Back to top{% else %}맨 위로 이동{% endif %}" hidden>
+    <span aria-hidden="true">↑</span>
+  </button>
   {% include site-scripts.html %}
 </body>
 </html>
