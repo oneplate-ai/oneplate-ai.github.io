@@ -286,6 +286,9 @@ html[data-theme="dark"] .principle-layout li:last-child { border-color: #465148;
   font-size: 13px;
   line-height: 1.7;
 }
+.series-page-layout article p:not(.post-kicker):not(.summary):not(.verification-note) { text-indent: 1em; }
+.series-page-layout article p.summary,
+.series-page-layout article p.verification-note { text-indent: 0; }
 .sources { padding-top: 12px; border-top: 1px solid var(--line); font-size: 14px; }
 .sources li { overflow-wrap: anywhere; }
 html[data-theme="dark"] .series-page-layout article p,
