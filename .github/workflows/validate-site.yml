@@ -17,6 +17,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Reject raw Pages mode for Jekyll source
+        run: |
+          test ! -e .nojekyll
+          test -f index.md
+
       - name: Build generated site
         run: docker compose run --rm jekyll bundle exec jekyll build --trace
 
