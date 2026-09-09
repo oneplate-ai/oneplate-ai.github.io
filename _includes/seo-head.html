@@ -18,6 +18,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{{ meta_title | escape }}">
 <meta name="twitter:description" content="{{ meta_description | escape }}">
+{% if page.noindex or site.preview %}<meta name="robots" content="noindex, nofollow">{% endif %}
 {% if page.translation_key %}
   {% assign translation_posts = site.posts | where: 'translation_key', page.translation_key %}
   {% assign ko_post = translation_posts | where: 'lang', 'ko' | first %}
