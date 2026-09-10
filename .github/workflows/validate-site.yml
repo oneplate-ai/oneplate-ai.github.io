@@ -28,6 +28,12 @@ jobs:
       - name: Validate bilingual publication pairs
         run: docker compose run --rm jekyll ruby scripts/validate_bilingual_publication.rb
 
+      - name: Test editorial rule validator
+        run: docker compose run --rm jekyll ruby test/test_validate_editorial_rules.rb
+
+      - name: Report editorial publication rules
+        run: docker compose run --rm jekyll ruby scripts/validate_editorial_rules.rb --report
+
       - name: Validate generated HTML, local assets, and sitemap
         working-directory: _site
         shell: python

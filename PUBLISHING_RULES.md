@@ -27,6 +27,22 @@ AI 한 접시는 다음 두 가지 콘텐츠를 구분해 운영합니다.
 - 삽화 캡션은 기본적으로 넣지 않습니다.
 - 긴 글은 2편 이상으로 나누는 것을 우선 검토합니다.
 
+### 자동 검사 표기
+
+- 공개 글의 모든 `h2` 소제목은 마침표(`.`), 물음표(`?`), 느낌표(`!`) 중 하나로 끝냅니다. 출처·한 줄 정리도 포함합니다.
+- 공개 글에는 하단 출처 섹션(`출처.` 또는 `Sources.`)과 외부 출처 링크가 필요합니다.
+- AI로 생성한 삽화를 쓴 새 공개 글은 front matter에 `editorial_rules: 1`과 `ai_generated_images` 배열을 함께 적습니다.
+- `ai_generated_images`에는 `/assets/images/...svg` 경로를 적고, SVG 내부 우측 하단에 `AI로 생성한 이미지` 글씨만 넣습니다. 배경 라벨·텍스트 박스·`figcaption` 중복 표기는 금지합니다.
+- 현재 CI는 기존 글 이력을 보존하기 위해 `--report` 모드로 경고만 출력합니다. 기준 확정 뒤 `--strict`로 전환하면 `editorial_rules: 1`이 지정된 새 글에만 이 규칙을 차단 적용합니다.
+
+예시:
+
+```yaml
+editorial_rules: 1
+ai_generated_images:
+  - /assets/images/easy-ai-05-example.svg
+```
+
 ## 3. 코너별 구성
 
 ### 쉽게 먹는 AI
