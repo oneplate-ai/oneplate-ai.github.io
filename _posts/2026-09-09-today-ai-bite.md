@@ -30,12 +30,12 @@ layout: post
 <p class="multi-sentence">소개된 방식은 각 에이전트가 어떤 도구를 호출했는지와 결과가 무엇인지 기록하고, 필요한 경우 사람이 실행 흐름에 개입할 수 있도록 합니다.<br />이는 새 소비자용 AI 서비스 출시가 아니라, 자체 에이전트 시스템을 만드는 개발자를 위한 기술 안내입니다.<br /></p>
 <ul><li><strong>누구에게 해당하나:</strong> 여러 AI 에이전트에게 조사·문서 요약·일정 처리 같은 업무를 나누려는 개발팀과 운영팀입니다.</li><li><strong>현재 상태:</strong> Google Cloud는 관리형 플랫폼을 선택할 수 있는 팀과 자체 실행 구조를 만들려는 팀의 선택지를 함께 설명했습니다.<br />실제 사용 가능 범위와 비용은 해당 제품 문서에서 별도로 확인해야 합니다.<br /></li><li><strong>왜 중요한가:</strong> 에이전트가 늘어날수록 ‘결과가 좋았는가’만큼 ‘어떤 도구에 접근했고 어떤 순서로 실행했는가’를 확인할 수 있어야 하기 때문입니다.<br /></li><li><strong>주의할 점:</strong> 이 글은 Google Cloud의 기술 안내입니다.<br />특정 SDK를 쓰면 모든 에이전트 운영 문제가 자동으로 해결된다는 뜻은 아닙니다.<br /></li></ul>
 
-<h2>오늘의 한 줄 정리</h2>
+<h2>오늘의 한 줄 정리.</h2>
 <p class="summary">AI를 잘 쓰는 일은 더 강한 모델을 고르는 데서 끝나지 않습니다.<br />영향을 연구하고, 설치 경로를 점검하고, 에이전트의 행동을 기록·통제하는 일이 함께 필요합니다.<br /></p>
 
 <p class="verification-note">이번 게시글은 2026년 9월 9일 KST에 확인했으며, 세 항목 모두 2026년 9월 8일 공식 자료를 바탕으로 작성했습니다.<br />연구 지원 조건과 제품·SDK의 이용 가능 범위는 변경될 수 있으므로 공개 직전에 해당 공식 안내를 다시 확인해야 합니다.<br /></p>
 
-<h2>출처</h2>
+<h2>출처.</h2>
 <ul class="sources">
 <li><a href="https://openai.com/index/teen-development-research-grants/">OpenAI — Funding grants for new research into AI and teen development</a></li>
 <li><a href="https://cloud.google.com/blog/topics/threat-intelligence/from-prompting-to-autonomy-the-evolution-of-adversarial-ai">Google Threat Intelligence Group — From Prompting to Autonomy: The Evolution of Adversarial AI</a></li>

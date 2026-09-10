@@ -30,12 +30,12 @@ layout: post
 <p class="multi-sentence">The approach records which tools each agent called and what happened, while allowing people to intervene in the execution flow when needed.<br />This is not a new consumer AI launch; it is technical guidance for developers building their own agent systems.<br /></p>
 <ul><li><strong>Who it may help:</strong> Development and operations teams assigning research, document summaries, scheduling, or other work across several AI agents.</li><li><strong>Current status:</strong> Google Cloud outlines options for teams choosing a managed platform and for those building their own execution structure.<br />Actual availability and pricing should be confirmed in the relevant product documentation.<br /></li><li><strong>Why it matters:</strong> As the number of agents grows, teams need to know not only whether an outcome was good, but also which tools were accessed and in what sequence.<br /></li><li><strong>What to watch:</strong> This is Google Cloud’s technical guidance.<br />Using one SDK does not automatically solve every agent-operations problem.<br /></li></ul>
 
-<h2>Today in one sentence</h2>
+<h2>Today in one sentence.</h2>
 <p class="summary">Using AI well is not only about picking a stronger model.<br />It also means studying its effects, checking how tools enter a workspace, and logging and controlling what agents do.<br /></p>
 
 <p class="verification-note">This post was checked on September 9, 2026 KST and is based on three official materials published on September 8, 2026.<br />Funding terms and product or SDK availability can change, so the official guidance should be checked again immediately before publication.<br /></p>
 
-<h2>Sources</h2>
+<h2>Sources.</h2>
 <ul class="sources">
 <li><a href="https://openai.com/index/teen-development-research-grants/">OpenAI — Funding grants for new research into AI and teen development</a></li>
 <li><a href="https://cloud.google.com/blog/topics/threat-intelligence/from-prompting-to-autonomy-the-evolution-of-adversarial-ai">Google Threat Intelligence Group — From Prompting to Autonomy: The Evolution of Adversarial AI</a></li>

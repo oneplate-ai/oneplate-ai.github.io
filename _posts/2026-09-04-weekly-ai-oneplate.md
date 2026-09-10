@@ -31,7 +31,7 @@ layout: post
 <p class="multi-sentence">개발자는 하나의 AI만 고정해서 쓰기보다, 긴 작업·터미널 작업·실패 후 재시도처럼 목적에 따라 모델을 비교할 수 있게 되었습니다.<br />이는 AI를 고르는 기준이 단순한 유명세보다 작업의 종류, 비용, 속도, 조직 정책으로 이동하고 있다는 뜻입니다.<br /></p>
 <p class="multi-sentence">GitHub가 소개한 성능 평가는 회사의 초기 테스트 결과이므로 독립적인 검증과 구분해야 합니다.<br />AI가 생성하거나 수정한 코드는 어떤 모델을 사용했는지와 관계없이 테스트하고 사람이 검토해야 합니다.<br /></p>
 
-<h2>이번 주 흐름</h2>
+<h2>이번 주 흐름.</h2>
 <p>이번 주 공개된 두 편의 AI 한입을 함께 보면, AI의 확장은 세 방향으로 정리할 수 있습니다.<br /></p>
 <ul>
 <li><strong>연결:</strong> 의료 기록과 개발 도구처럼 실제 업무 자료·서비스와 연결됩니다.</li>
@@ -42,7 +42,7 @@ layout: post
 
 <p class="verification-note">이번 게시글은 2026년 8월 29일부터 9월 4일까지 "오늘 AI 한입"을 바탕으로 정리했습니다.<br />이용 조건·가격·정책은 변동될 수 있습니다.<br /></p>
 
-<h2>출처</h2>
+<h2>출처.</h2>
 <ul class="sources">
 
 <li><a href="https://openai.com/index/chatgpt-connects-health-records-and-healthcare-sources/">OpenAI — Healthcare organizations can now connect EHR and additional industry data to ChatGPT</a></li>
