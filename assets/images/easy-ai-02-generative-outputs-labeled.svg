@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 1536 1024" role="img" aria-labelledby="title desc">
+  <title id="title">생성형 AI가 글, 이미지, 코드를 만드는 삽화</title>
+  <desc id="desc">사람과 친근한 AI가 생성형 AI의 여러 결과물을 살펴보는 모습. 우측 하단에 AI로 생성한 이미지라는 글씨가 있다.</desc>
+  <image href="easy-ai-02-generative-outputs.png" width="1536" height="1024" />
+  <text x="1492" y="984" fill="#3f493f" font-family="'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif" font-size="22" font-weight="500" text-anchor="end">AI로 생성한 이미지</text>
+</svg>
