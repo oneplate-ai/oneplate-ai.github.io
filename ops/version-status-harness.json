@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "project": {
+    "id": "harness-optimization",
+    "name": "하네스 최적화"
+  },
+  "updated_at": "2026-09-11T00:00:00+09:00",
+  "versions": [
+    {
+      "name": "v.1",
+      "status": "완료 · 운영 반영",
+      "completed_on": "2026-09-11",
+      "summary": "발행 규칙 검사와 다국어 검증을 정비하고, 규칙 버전·비소급 원칙·소급 예외·새 글 전용 엄격 CI를 운영에 반영했습니다."
+    }
+  ]
+}

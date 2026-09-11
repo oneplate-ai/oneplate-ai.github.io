@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "project": {
+    "id": "ai-one-plate-globalization",
+    "name": "AI 한 접시 글로벌화"
+  },
+  "updated_at": "2026-09-11T00:00:00+09:00",
+  "versions": [
+    {
+      "name": "v.1",
+      "status": "완료 · 다국어 운영 중",
+      "completed_on": "2026-09-08",
+      "summary": "한국어 사이트를 유지하면서 영어 경로, 번역 연결, 언어별 시리즈와 검색 노출 규칙을 구축했습니다."
+    }
+  ]
+}
