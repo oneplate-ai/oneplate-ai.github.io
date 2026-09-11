@@ -17,7 +17,7 @@ class ValidateEditorialRulesTest < Minitest::Test
     end
   end
 
-  def write_post(root, name, lang:, key:, body:, images: [])
+  def write_post(root, name, lang:, key:, body:, images: [], rules_version: 1)
     permalink = lang == "en" ? "/en/posts/#{key}.html" : "/posts/#{key}.html"
     image_yaml = images.empty? ? "" : "ai_generated_images:\n#{images.map { |image| "  - #{image}" }.join("\n")}\n"
     File.write(File.join(root, "_posts", name), <<~POST)
@@ -28,7 +28,7 @@ class ValidateEditorialRulesTest < Minitest::Test
       translation_key: #{key}
       permalink: #{permalink}
       published: true
-      editorial_rules: 1
+      editorial_rules: #{rules_version}
       published_at: 2026-09-10
       #{image_yaml}---
       #{body}
@@ -75,6 +75,22 @@ class ValidateEditorialRulesTest < Minitest::Test
 
       _out, error, status = run_validator(root, "--strict")
       assert status.success?, error
+    end
+  end
+
+  def test_strict_mode_enforces_later_editorial_rule_versions
+    with_fixture do |root|
+      File.write(File.join(root, "assets", "images", "scene.svg"), "<svg><text>no label</text></svg>")
+      body = <<~HTML
+        <h2>문장형 소제목.</h2>
+        <figure><img src="{{ '/assets/images/scene.svg' | relative_url }}" alt="scene"></figure>
+        <h2>출처.</h2><ul class="sources"><li><a href="https://example.com">official</a></li></ul>
+      HTML
+      write_post(root, "2026-09-10-test.md", lang: "ko", key: "test", body: body, images: ["/assets/images/scene.svg"], rules_version: 2)
+
+      _out, error, status = run_validator(root, "--strict")
+      refute status.success?
+      assert_includes error, "AI 이미지 내부 표기"
     end
   end
 end
