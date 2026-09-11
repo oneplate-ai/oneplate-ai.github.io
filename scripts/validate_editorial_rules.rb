@@ -68,7 +68,7 @@ Dir.glob(File.join(POSTS_DIR, "*"), File::FNM_CASEFOLD).sort.each do |path|
   next unless public_post?(metadata)
 
   checked += 1
-  strict_candidate = metadata["editorial_rules"] == 1
+  strict_candidate = metadata["editorial_rules"].is_a?(Integer) && metadata["editorial_rules"].positive?
   strict_checked += 1 if strict_candidate
   prefix = File.basename(path)
 
