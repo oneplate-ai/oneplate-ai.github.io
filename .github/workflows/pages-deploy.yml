@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build with Docker Jekyll
-        run: docker compose run --rm jekyll bundle exec jekyll build --trace
+        run: docker compose run --rm jekyll bundle exec jekyll build --future --trace
 
       - name: Upload generated site
         uses: actions/upload-pages-artifact@v3
