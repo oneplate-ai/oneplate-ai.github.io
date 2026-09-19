@@ -7,7 +7,12 @@ import html
 import re
 from pathlib import Path
 
-POST_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(?P<series>.+?)(?:-\d+)?\.html$")
+POST_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(?P<series>.+)\.html$")
+# The canonical series slug is ``weekly-ai`` while its historical post
+# filenames use the more descriptive ``weekly-ai-oneplate`` suffix.
+SERIES_FILENAME_ALIASES = {
+    "weekly-ai": {"weekly-ai", "weekly-ai-oneplate"},
+}
 TITLE_RE = re.compile(r'<h1>(.*?)</h1>', re.S)
 KICKER_RE = re.compile(r'<p class="post-kicker">(.*?)</p>', re.S)
 ARTICLE_RE = re.compile(r'(<article)(?P<attrs>[^>]*)>(?P<body>.*?)</article>', re.S)
@@ -20,9 +25,10 @@ def clean(value: str) -> str:
 
 def discover_posts(root: Path, series: str) -> list[tuple[str, Path, str, str]]:
     found = []
+    filename_series = SERIES_FILENAME_ALIASES.get(series, {series})
     for path in (root / "posts").glob("*.html"):
         match = POST_RE.match(path.name)
-        if not match or match.group("series") != series:
+        if not match or match.group("series") not in filename_series:
             continue
         text = path.read_text(encoding="utf-8")
         title = TITLE_RE.search(text)
