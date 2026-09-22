@@ -31,6 +31,9 @@ jobs:
       - name: Test editorial rule validator
         run: docker compose run --rm jekyll ruby test/test_validate_editorial_rules.rb
 
+      - name: Test publication gate
+        run: python3 scripts/test_publication_gate.py
+
       - name: Enforce editorial rules for declared versions
         run: docker compose run --rm jekyll ruby scripts/validate_editorial_rules.rb --strict
 
