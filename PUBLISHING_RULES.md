@@ -154,6 +154,16 @@ ai_generated_images:
 
 초안과 승인 대기 글은 공개 영역과 `sitemap.xml`에 포함하지 않습니다.
 
+### Preview 배포 계약
+
+승인 검토용 Preview는 공개 저장소의 GitHub Pages가 아니라 전용 저장소 `oneplate-ai/oneplate-ai-preview`를 사용합니다.
+
+- Preview Pages 기준 URL은 GitHub Pages API가 반환하는 `https://oneplate-ai.github.io/oneplate-ai-preview/`입니다. 저장소의 Pages 원본은 `main` 브랜치의 루트이며, 매 작업 전에 API로 이 설정과 `built` 상태를 다시 확인합니다.
+- Preview는 최신 `origin/main`에서 만든 격리 worktree에서 빌드합니다. 한·영 초안은 정확한 검토 산출물을 사용하고 `published: false`, `draft: true`, `noindex: true`를 유지합니다. Jekyll Preview 빌드는 초안을 포함하도록 `unpublished: true`와 Preview base URL을 적용해야 합니다.
+- Preview 저장소의 최신 `main`을 fetch한 뒤, 한·영 글 HTML 2개와 해당 글을 연결하는 한·영 홈페이지·한·영 시리즈 페이지 4개만 복사·stage합니다. 다른 Preview 산출물, `sitemap.xml`, `architecture/`, `service-operations/`, `ops/`, `test/` 경로는 변경하거나 삭제하지 않습니다.
+- push 뒤 Pages가 `built`가 된 것을 확인하고, 한·영 글 URL·CSS·필요한 로컬 자산을 다시 읽습니다. 두 글은 HTTP 200, `noindex, nofollow`, 상호 `hreflang`, 승인된 제목·주제, Preview 저장소의 stage 파일과 일치하는 SHA-256을 모두 만족해야 합니다.
+- 이 Preview 배포는 검토용 원격 변경일 뿐 공개 발행이 아닙니다. 공개 `_posts/`, 공개 `sitemap.xml`, 공개 저장소 `main`, 승인 기록은 사용자의 별도 공개 승인이 있기 전에는 변경하지 않습니다.
+
 모든 개별 게시글에는 해당 시리즈의 게시글 목록을 직접 포함합니다. 목록에는 글이 1개뿐인 경우에도 현재 글을 표시하며, 새 글이 추가되면 해당 시리즈의 모든 게시글 목록을 갱신합니다. iframe이나 외부 프레임에 의존하지 않습니다.
 
 새 글 발행 후에는 저장소 루트에서 `python3 scripts/update_series.py <시리즈슬러그>`를 실행해 해당 시리즈 게시판의 최신 본문과 모든 게시글의 목록을 동기화합니다. 실행 전후에 초안·승인 상태를 확인하며, 이 명령은 자동 공개나 자동 배포를 수행하지 않습니다.
