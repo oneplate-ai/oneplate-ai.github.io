@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from publication_gate import GateError, validate_approval, validate_scope, weekly_inventory
+from publication_gate import GateError, validate_approval, validate_editorial_diversity, validate_scope, weekly_inventory
 
 
 DRAFT = """---
@@ -19,7 +19,9 @@ published: false
 draft: true
 noindex: true
 ---
-본문입니다.
+<h2>1. 첫 소식. <a class="source-badge" href="https://example.com/one">공식 발표</a></h2>
+<h2>2. 둘째 소식. <a class="source-badge" href="https://example.org/two">공식 발표</a></h2>
+<h2>3. 셋째 소식. <a class="source-badge" href="https://example.net/three">공식 발표</a></h2>
 """
 
 
@@ -85,6 +87,19 @@ class PublicationGateTests(unittest.TestCase):
             approval = self.approval(root)
             data = validate_approval(approval, root, "today-ai-bite", "2026-09-21")
             self.assertEqual(data["schema_version"], 2)
+
+    def test_editorial_diversity_rejects_repeated_organization(self):
+        tmp, root = self.make_root()
+        with tmp:
+            path = root / "drafts" / "2026-09-21-today-ai-bite.md"
+            path.write_text(DRAFT.format(
+                title="2026년 9월 21일", series="today-ai-bite", lang="ko",
+                date="2026-09-21", key="today-ai-bite-2026-09-21",
+                permalink="/posts/2026-09-21-today-ai-bite.html",
+            ).replace("https://example.org/two", "https://github.blog/two")
+             .replace("https://example.net/three", "https://github.com/three"), encoding="utf-8")
+            with self.assertRaisesRegex(GateError, "콘텐츠 다양성"):
+                validate_editorial_diversity(path)
 
     def test_legacy_key_names_are_rejected(self):
         tmp, root = self.make_root()

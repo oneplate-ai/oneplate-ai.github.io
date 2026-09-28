@@ -12,9 +12,11 @@ import json
 import re
 import subprocess
 import sys
+from collections import Counter
 from datetime import date
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_DRAFT_KEYS = {
@@ -36,6 +38,46 @@ REQUIRED_APPROVAL_KEYS = {
     "drafts",
 }
 POST_RE = re.compile(r"^(?P<date>\d{4}-\d{2}-\d{2})-(?P<slug>.+)\.md$")
+SOURCE_BADGE_RE = re.compile(
+    r'<h2\b[^>]*>.*?<a\b[^>]*class=["\']source-badge["\'][^>]*href=["\'](https?://[^"\']+)',
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def source_organization(url: str) -> str:
+    """Map source hosts to an organization for editorial diversity checks."""
+    host = (urlparse(url).hostname or "").lower().removeprefix("www.")
+    known = {
+        "github.blog": "GitHub",
+        "github.com": "GitHub",
+        "openai.com": "OpenAI",
+        "help.openai.com": "OpenAI",
+        "blog.google": "Google",
+        "google.com": "Google",
+        "anthropic.com": "Anthropic",
+        "claude.com": "Anthropic",
+        "microsoft.com": "Microsoft",
+        "blogs.microsoft.com": "Microsoft",
+        "aws.amazon.com": "AWS",
+    }
+    return known.get(host, host or "unknown")
+
+
+def validate_editorial_diversity(path: Path) -> dict[str, object]:
+    """Fail closed when a daily brief is concentrated in one organization."""
+    text = path.read_text(encoding="utf-8")
+    sources = [source_organization(url) for url in SOURCE_BADGE_RE.findall(text)]
+    if len(sources) < 2:
+        raise GateError(f"오늘 AI 한입의 공식 출처 항목이 2개 미만입니다: {path}")
+    counts = Counter(sources)
+    repeated = {org: count for org, count in counts.items() if count > 1}
+    if repeated:
+        details = ", ".join(f"{org}={count}" for org, count in sorted(repeated.items()))
+        raise GateError(
+            "콘텐츠 다양성 게이트 실패: 한 회차에 같은 회사가 반복되었습니다 "
+            f"({details}). 기본 기준은 회사별 최대 1개 항목입니다."
+        )
+    return {"items": len(sources), "organizations": sorted(counts)}
 
 
 class GateError(ValueError):
@@ -103,6 +145,7 @@ def validate_approval(path: Path, root: Path = ROOT, expected_series: str | None
     languages = []
     translation_keys = set()
     seen_paths = set()
+    diversity_by_language = {}
     for item in drafts:
         if not isinstance(item, dict):
             raise GateError("drafts 항목은 객체여야 합니다.")
@@ -141,11 +184,16 @@ def validate_approval(path: Path, root: Path = ROOT, expected_series: str | None
             raise GateError(f"permalink 불일치 또는 언어 경로 오류: {draft_path}")
         translation_keys.add(item["translation_key"])
         seen_paths.add(str(draft_path))
+        if series == "today-ai-bite":
+            diversity_by_language[lang] = validate_editorial_diversity(draft_path)
 
     if set(languages) != {"ko", "en"}:
         raise GateError("승인 기록은 ko·en 쌍이어야 합니다.")
     if len(translation_keys) != 1:
         raise GateError("한·영 초안의 translation_key가 서로 다릅니다.")
+    if series == "today-ai-bite":
+        if diversity_by_language.get("ko") != diversity_by_language.get("en"):
+            raise GateError("한·영 초안의 회사·출처 분포가 서로 다릅니다.")
     expected_unit = f"{series}-{data['drafts'][0]['date']}-bilingual"
     if data["publication_unit"] != expected_unit:
         raise GateError(f"publication_unit 불일치: expected={expected_unit}, actual={data['publication_unit']}")
