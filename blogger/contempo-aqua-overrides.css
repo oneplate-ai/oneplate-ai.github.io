@@ -1,0 +1,179 @@
+/*
+ * AI 한 접시 — Blogger Contempo 계열 공통 오버라이드
+ *
+ * 적용 대상: Contempo Light / Aqua / Flamingo 계열
+ * 원칙:
+ * - Blogger 기본 레이아웃과 위젯 구조는 유지합니다.
+ * - 이 파일은 색상·글꼴·간격 같은 시각 스타일만 조정합니다.
+ * - 메뉴 위치와 가젯 배치는 Blogger 레이아웃에서 관리합니다.
+ */
+
+/* 1. Design tokens */
+:root {
+  --oneplate-paper: #f8f4ea;
+  --oneplate-paper-deep: #eee7d7;
+  --oneplate-ink: #202720;
+  --oneplate-muted: #667064;
+  --oneplate-green: #244e3d;
+  --oneplate-accent: #bd6346;
+  --oneplate-line: #d8d1c1;
+}
+
+/* 2. Site background and header */
+body,
+.page_body,
+.page_body-container {
+  background: var(--oneplate-paper) !important;
+  color: var(--oneplate-ink) !important;
+}
+
+.centered-top-container,
+.centered-top,
+.centered-top-placeholder {
+  background: var(--oneplate-paper) !important;
+  border-color: var(--oneplate-line) !important;
+}
+
+#Header1,
+#Header1 h1,
+#Header1 .title {
+  color: var(--oneplate-green) !important;
+  font-family: "Gowun Dodum", "Noto Sans KR", sans-serif !important;
+}
+
+#Header1 h1,
+#Header1 .title {
+  letter-spacing: -0.06em;
+}
+
+/* 3. Blog width and post surfaces */
+.blog-posts.hfeed.container,
+.main-heading,
+.blog-posts {
+  max-width: 1120px !important;
+}
+
+.post-outer-container,
+.post-outer,
+.post {
+  background: var(--oneplate-paper) !important;
+}
+
+/* 4. Post title and body */
+.main-heading,
+.post-title,
+.post-title a,
+.post-title a:visited {
+  color: var(--oneplate-ink) !important;
+  font-family: "Gowun Dodum", "Noto Sans KR", sans-serif !important;
+  letter-spacing: -0.06em;
+}
+
+.post-body,
+.post-snippet,
+.post-body-container {
+  color: var(--oneplate-ink) !important;
+  font-family: "Noto Sans KR", system-ui, sans-serif !important;
+  line-height: 1.7 !important;
+}
+
+.post-body img,
+.post-body figure img {
+  max-width: 100%;
+  height: auto;
+}
+
+.post-body .summary {
+  padding: 18px 20px;
+  border-left: 3px solid var(--oneplate-accent);
+  background: #fbf8f1;
+}
+
+.post-body .verification-note {
+  padding: 10px 14px;
+  border-left: 2px solid #d6ddd2;
+  background: #fafbf8;
+  color: #758075;
+  font-size: 13px;
+}
+
+/* 5. Source links and source badges */
+.post-body a,
+.post-body a:visited {
+  color: var(--oneplate-green) !important;
+}
+
+.post-body .source-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--oneplate-line);
+  border-radius: 999px;
+  color: var(--oneplate-green);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+/* 6. Labels, comments, sharing, and ad/widget surfaces */
+.post-labels,
+.post-footer,
+.post-footer-line {
+  color: var(--oneplate-muted) !important;
+  border-color: var(--oneplate-line) !important;
+}
+
+.post-labels a,
+.post-labels a:visited {
+  background: var(--oneplate-paper-deep) !important;
+  border: 1px solid var(--oneplate-line) !important;
+  color: var(--oneplate-green) !important;
+}
+
+.comments,
+#comments,
+.comment-form,
+.comment-thread,
+.post-share-buttons,
+.inline-ad,
+.inline-ad-placeholder,
+.AdSense,
+.widget-content {
+  background: var(--oneplate-paper) !important;
+  border-color: var(--oneplate-line) !important;
+  color: var(--oneplate-ink) !important;
+}
+
+.comments a,
+.comments a:visited,
+.post-share-buttons a,
+.post-share-buttons a:visited {
+  color: var(--oneplate-green) !important;
+}
+
+/* 7. Blogger attribution */
+#Attribution1 .blogger,
+#Attribution1 .blogger a,
+#Attribution1 .blogger a:visited {
+  color: var(--oneplate-muted) !important;
+}
+
+/* 8. Hamburger drawer series menu
+ * PageList2 must remain in Blogger's sidebar_bottom layout area.
+ * This rule changes only link color, not drawer position or visibility.
+ */
+#PageList2 a,
+#PageList2 a:visited,
+#PageList2 a:hover,
+#PageList2 a:focus {
+  color: var(--oneplate-green) !important;
+}
+
+/* 9. Mobile spacing */
+@media (max-width: 720px) {
+  .centered-top-container,
+  .centered-top,
+  .blog-posts.hfeed.container,
+  .main-heading {
+    width: calc(100% - 32px) !important;
+  }
+}

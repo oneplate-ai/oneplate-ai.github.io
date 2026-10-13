@@ -101,6 +101,41 @@ class PublicationGateTests(unittest.TestCase):
             with self.assertRaisesRegex(GateError, "콘텐츠 다양성"):
                 validate_editorial_diversity(path)
 
+    def test_historical_migration_exception_allows_repeated_organization(self):
+        tmp, root = self.make_root()
+        with tmp:
+            approval = self.approval(root)
+            data = json.loads(approval.read_text(encoding="utf-8"))
+            for item in data["drafts"]:
+                draft = root / item["exact_draft_path"]
+                draft.write_text(
+                    draft.read_text(encoding="utf-8")
+                    .replace("https://example.org/two", "https://github.blog/two")
+                    .replace("https://example.net/three", "https://github.com/three"),
+                    encoding="utf-8",
+                )
+                item["sha256"] = hashlib.sha256(draft.read_bytes()).hexdigest()
+            data["migration_exception"] = {
+                "type": "historical-migration-diversity-exception-v1",
+                "scope": "bilingual-blogger-migration",
+                "reason": "기존 GitHub Pages 역사 글을 Blogger로 이전하기 위한 한시적 예외",
+            }
+            approval.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            self.assertEqual(
+                validate_approval(approval, root, "today-ai-bite", "2026-09-21")["schema_version"],
+                2,
+            )
+
+    def test_unknown_migration_exception_is_rejected(self):
+        tmp, root = self.make_root()
+        with tmp:
+            approval = self.approval(root)
+            data = json.loads(approval.read_text(encoding="utf-8"))
+            data["migration_exception"] = {"type": "unknown"}
+            approval.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(GateError, "migration_exception"):
+                validate_approval(approval, root, "today-ai-bite", "2026-09-21")
+
     def test_legacy_key_names_are_rejected(self):
         tmp, root = self.make_root()
         with tmp:

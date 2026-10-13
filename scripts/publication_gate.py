@@ -42,6 +42,8 @@ SOURCE_BADGE_RE = re.compile(
     r'<h2\b[^>]*>.*?<a\b[^>]*class=["\']source-badge["\'][^>]*href=["\'](https?://[^"\']+)',
     re.IGNORECASE | re.DOTALL,
 )
+MIGRATION_EXCEPTION_TYPE = "historical-migration-diversity-exception-v1"
+MIGRATION_EXCEPTION_SCOPE = "bilingual-blogger-migration"
 
 
 def source_organization(url: str) -> str:
@@ -133,6 +135,18 @@ def validate_approval(path: Path, root: Path = ROOT, expected_series: str | None
         raise GateError("승인 기록은 schema_version 2여야 합니다.")
     if not isinstance(data["approval_text_literal"], str) or not data["approval_text_literal"].strip():
         raise GateError("approval_text_literal이 비어 있습니다.")
+    migration_exception = data.get("migration_exception")
+    allow_migration_diversity_exception = False
+    if migration_exception is not None:
+        if not isinstance(migration_exception, dict):
+            raise GateError("migration_exception은 객체여야 합니다.")
+        if migration_exception.get("type") != MIGRATION_EXCEPTION_TYPE:
+            raise GateError("migration_exception type이 허용된 값이 아닙니다.")
+        if migration_exception.get("scope") != MIGRATION_EXCEPTION_SCOPE:
+            raise GateError("migration_exception scope가 허용된 값이 아닙니다.")
+        if not isinstance(migration_exception.get("reason"), str) or not migration_exception["reason"].strip():
+            raise GateError("migration_exception reason이 비어 있습니다.")
+        allow_migration_diversity_exception = True
     series = data["series"]
     if not isinstance(series, str) or not re.fullmatch(r"[a-z0-9-]+", series):
         raise GateError(f"series가 안전한 slug가 아닙니다: {series!r}")
@@ -184,14 +198,14 @@ def validate_approval(path: Path, root: Path = ROOT, expected_series: str | None
             raise GateError(f"permalink 불일치 또는 언어 경로 오류: {draft_path}")
         translation_keys.add(item["translation_key"])
         seen_paths.add(str(draft_path))
-        if series == "today-ai-bite":
+        if series == "today-ai-bite" and not allow_migration_diversity_exception:
             diversity_by_language[lang] = validate_editorial_diversity(draft_path)
 
     if set(languages) != {"ko", "en"}:
         raise GateError("승인 기록은 ko·en 쌍이어야 합니다.")
     if len(translation_keys) != 1:
         raise GateError("한·영 초안의 translation_key가 서로 다릅니다.")
-    if series == "today-ai-bite":
+    if series == "today-ai-bite" and not allow_migration_diversity_exception:
         if diversity_by_language.get("ko") != diversity_by_language.get("en"):
             raise GateError("한·영 초안의 회사·출처 분포가 서로 다릅니다.")
     expected_unit = f"{series}-{data['drafts'][0]['date']}-bilingual"
