@@ -690,7 +690,8 @@ class ReleaseClient:
             raise BloggerReleaseError(
                 "Blogger 언어 전환 링크 갱신이 부분 완료되었습니다. "
                 f"prepared={prepared_mutations}, published={published_posts}, "
-                f"live_completed={completed_live}, switcher_completed={completed_switchers}, failed={failed_switcher}; "
+                f"live_completed={completed_live}, navigation_completed={completed_navigation}, "
+                f"switcher_completed={completed_switchers}, failed={failed_switcher}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
         try:
