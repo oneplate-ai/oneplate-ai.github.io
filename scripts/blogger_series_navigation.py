@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronize visible Blogger series navigation and restored Page image URLs.
+"""Synchronize Blogger series navigation, counterpart language links, and restored Page image URLs.
 
 Default mode is read-only.  Pass --apply only after reviewing the exact plan.
 """
@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+
+from blogger_adapter import inject_language_switcher
 
 BLOGGER_API = "https://www.googleapis.com/blogger/v3"
 DEFAULT_BLOG_ID = "4141805834166693370"
@@ -78,6 +80,37 @@ def replace_navigation(content: str, navigation: str) -> str:
     if NAV_PATTERN.search(content):
         return NAV_PATTERN.sub(navigation, content, count=1)
     return content.rstrip() + "\n\n" + navigation + "\n"
+
+
+def language_pair_urls(posts: list[dict[str, Any]]) -> dict[str, tuple[str, str]]:
+    """Map every live post ID to its exact Korean/English counterpart URLs."""
+    groups: dict[tuple[str, str], dict[str, dict[str, Any]]] = {}
+    for post in posts:
+        if not post.get("published"):
+            continue
+        language, series = language_and_series(post)
+        published = post.get("published")
+        url = post.get("url")
+        if not isinstance(published, str) or not isinstance(url, str) or not url:
+            raise ValueError(f"공개 글의 published/url 메타데이터가 없습니다: {post.get('id')}")
+        group = groups.setdefault((series, published), {})
+        if language in group:
+            raise ValueError(f"한·영 대응 글이 중복됩니다: series={series}, published={published}, lang={language}")
+        group[language] = post
+
+    pairs: dict[str, tuple[str, str]] = {}
+    for (series, published), group in groups.items():
+        if set(group) != {"ko", "en"}:
+            raise ValueError(f"한·영 대응 글이 불완전합니다: series={series}, published={published}")
+        ko_url, en_url = str(group["ko"]["url"]), str(group["en"]["url"])
+        pairs[str(group["ko"]["id"])] = (ko_url, en_url)
+        pairs[str(group["en"]["id"])] = (ko_url, en_url)
+    return pairs
+
+
+def navigation_block(content: str) -> str | None:
+    match = NAV_PATTERN.search(content)
+    return match.group(0) if match else None
 
 
 def apply_image_url_map(content: str, image_urls: dict[str, str]) -> tuple[str, bool]:
@@ -171,11 +204,20 @@ def image_url_map(urls_path: Path) -> dict[str, str]:
 
 def plan_changes(posts: list[dict[str, Any]], pages: list[dict[str, Any]], image_urls: dict[str, str]) -> tuple[list[tuple[dict[str, Any], str]], list[tuple[dict[str, Any], str]]]:
     post_changes: list[tuple[dict[str, Any], str]] = []
+    counterparts = language_pair_urls(posts)
     for post in posts:
         if not post.get("published"):
             continue
         language_and_series(post)
         expected = replace_navigation(str(post.get("content", "")), render_series_navigation(post, posts))
+        ko_url, en_url = counterparts[str(post["id"])]
+        language, _ = language_and_series(post)
+        expected = inject_language_switcher(
+            expected,
+            current_lang=language,
+            ko_url=ko_url,
+            en_url=en_url,
+        )
         if expected != post.get("content"):
             post_changes.append((post, expected))
     page_changes: list[tuple[dict[str, Any], str]] = []
@@ -215,12 +257,25 @@ def main(argv: list[str] | None = None) -> int:
         posts = client.list_resource("posts")
         pages = client.list_resource("pages")
         post_changes, page_changes = plan_changes(posts, pages, image_url_map(args.image_urls))
+        switcher_changes = [
+            {"id": post["id"], "title": post["title"]}
+            for post, expected in post_changes
+            if "oneplate-language-switcher" not in str(post.get("content", ""))
+            and "oneplate-language-switcher" in expected
+        ]
+        navigation_changes = [
+            {"id": post["id"], "title": post["title"]}
+            for post, expected in post_changes
+            if navigation_block(str(post.get("content", ""))) != navigation_block(expected)
+        ]
         summary = {
             "mode": "apply" if args.apply else "plan",
             "posts_total": len(posts),
-            "live_post_navigation_changes": [
+            "live_post_content_changes": [
                 {"id": post["id"], "title": post["title"]} for post, _ in post_changes
             ],
+            "live_post_language_switcher_changes": switcher_changes,
+            "live_post_navigation_changes": navigation_changes,
             "page_image_changes": [
                 {"id": page["id"], "title": page["title"]} for page, _ in page_changes
             ],
