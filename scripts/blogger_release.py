@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Synchronize one approved bilingual GitHub Pages release to Blogger.
+"""Synchronize one approved bilingual release unit directly from drafts to Blogger.
 
-Default mode is read-only planning.  --apply is idempotent: it updates an
-existing Blogger draft or live post identified by (title, language), then
-promotes the exact approved bilingual pair to LIVE and reads it back.
+Default mode is read-only planning.  --apply is idempotent and does not require
+GitHub Pages public posts, URLs, builds, or deployment state.
 """
 from __future__ import annotations
 
@@ -21,7 +20,7 @@ from blogger_adapter import build_blogger_payload, inject_language_switcher
 from blogger_full_parity_sync import fresh_access_token, strip_navigation
 from blogger_series_navigation import NAV_PATTERN
 from blogger_publish import BloggerApiError, BloggerClient, build_client_payload
-from publication_gate import GateError, allowed_public_paths, validate_approval
+from publication_gate import GateError, validate_approval
 
 
 DEFAULT_BLOG_ID = "4141805834166693370"
@@ -169,41 +168,32 @@ def ensure_image_mapping(content: str, image_urls: dict[str, str]) -> None:
 def release_sources(
     root: Path,
     approval_path: Path,
-    source_paths: list[Path],
     image_url_path: Path,
 ) -> dict[tuple[str, str], dict[str, Any]]:
-    """Build the exact two live Blogger records from an approved Pages pair."""
+    """Build Blogger release payloads directly from the exact approved drafts."""
     try:
         approval = validate_approval(approval_path.resolve(), root.resolve())
     except (GateError, OSError, ValueError) as error:
-        raise BloggerReleaseError(f"GitHub Pages 승인 게이트를 통과하지 못했습니다: {error}") from error
+        raise BloggerReleaseError(f"승인 원본 검증을 통과하지 못했습니다: {error}") from error
 
     publish_date = str(approval["scheduled_publish_at"])
-    drafts = {str(item["lang"]): item for item in approval["drafts"]}
-    expected_paths = {
-        (root / path).resolve()
-        for path in allowed_public_paths(str(approval["series"]), str(drafts["ko"]["date"]))
-        if path.startswith("_posts/")
-    }
-    actual_paths = {path.resolve() for path in source_paths}
-    if actual_paths != expected_paths:
-        raise BloggerReleaseError(
-            "Blogger release source는 승인된 한·영 공개 _posts/ 쌍과 정확히 일치해야 합니다."
-        )
-
     image_urls = _image_urls(image_url_path)
     sources: dict[tuple[str, str], dict[str, Any]] = {}
-    for source_path in source_paths:
-        public_text = source_path.read_text(encoding="utf-8")
-        payload = build_blogger_payload(public_text, public_base_url="https://oneplate-ai.github.io", draft=False)
-        language = _language(payload, source_path)
-        draft_item = drafts[language]
+    for draft_item in approval["drafts"]:
         draft_path = (root / str(draft_item["exact_draft_path"])).resolve()
-        expected = public_copy_from_draft(draft_path.read_text(encoding="utf-8"))
-        if public_text != expected:
-            raise BloggerReleaseError(
-                f"공개 source가 승인 초안의 허용된 공개 변환과 다릅니다: {source_path.relative_to(root)}"
+        draft_text = draft_path.read_text(encoding="utf-8")
+        public_text = public_copy_from_draft(draft_text)
+        try:
+            payload = build_blogger_payload(
+                public_text,
+                public_base_url="https://oneplate-ai.blogspot.com",
+                draft=False,
             )
+        except ValueError as error:
+            raise BloggerReleaseError(f"승인 초안을 Blogger payload로 변환하지 못했습니다: {draft_item['exact_draft_path']}: {error}") from error
+        language = _language(payload, draft_path)
+        if language != draft_item["lang"] or payload.get("title") != draft_item["title"]:
+            raise BloggerReleaseError(f"승인 기록과 초안 payload가 일치하지 않습니다: {draft_item['exact_draft_path']}")
         ensure_image_mapping(str(payload["content"]), image_urls)
         content = apply_image_mapping(str(payload["content"]), image_urls)
         key = (str(payload["title"]), language)
@@ -211,7 +201,7 @@ def release_sources(
             raise BloggerReleaseError(f"Blogger title/language key가 중복됩니다: {key}")
         labels = payload.get("labels", [])
         if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels):
-            raise BloggerReleaseError(f"Blogger label 형식이 올바르지 않습니다: {source_path}")
+            raise BloggerReleaseError(f"Blogger label 형식이 올바르지 않습니다: {draft_path}")
         sources[key] = {
             "key": key,
             "title": str(payload["title"]),
@@ -219,10 +209,10 @@ def release_sources(
             "labels": sorted(labels),
             "content": content,
             "publish_date": publish_date,
-            "source_path": str(source_path.relative_to(root)),
+            "source_path": str(draft_item["exact_draft_path"]),
         }
     if set(item["language"] for item in sources.values()) != {"ko", "en"}:
-        raise BloggerReleaseError("Blogger release는 한국어·영어 공개 source 쌍이 필요합니다.")
+        raise BloggerReleaseError("Blogger release는 승인된 한국어·영어 초안 쌍이 필요합니다.")
     return sources
 
 
@@ -499,7 +489,6 @@ class ReleaseClient:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", action="append", required=True, help="승인된 공개 _posts/ 경로; 두 번 지정")
     parser.add_argument("--approval", type=Path, required=True)
     parser.add_argument("--image-urls", type=Path, required=True)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
@@ -510,7 +499,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--require-pages-readback",
         action="store_true",
-        help="과도기 정책: Blogger release 전 Pages 공개 한·영 URL을 필수 검증",
+        help="과도기 옵션: Blogger 계획/발행 전 Pages URL을 추가 검증",
     )
     parser.add_argument("--apply", action="store_true", help="Blogger API에 실제 반영")
     args = parser.parse_args(argv)
@@ -522,7 +511,7 @@ def main(argv: list[str] | None = None) -> int:
             args.pages_base_url,
             required=args.require_pages_readback,
         )
-        sources = release_sources(root, args.approval, [Path(item) for item in args.source], args.image_urls)
+        sources = release_sources(root, args.approval, args.image_urls)
         token = fresh_access_token(args.token_path, args.client_secret_path)
         release = ReleaseClient(BloggerClient(token, args.blog_id))
         changes = plan_release(sources, release.current())

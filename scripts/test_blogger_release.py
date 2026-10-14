@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+import hashlib
 import importlib
+import json
+import tempfile
 import unittest
 from datetime import datetime, timezone
+from pathlib import Path
 
 
 class BloggerReleaseTests(unittest.TestCase):
@@ -133,6 +137,69 @@ class BloggerReleaseTests(unittest.TestCase):
             "https://pages.example/posts/ko.html",
             "https://pages.example/en/posts/en.html",
         ])
+
+    def test_release_sources_are_built_directly_from_approved_drafts(self):
+        module = self._module()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            draft_dir = root / "drafts"
+            draft_dir.mkdir()
+            drafts = []
+            for lang, title, slug in (("ko", "승인된 제목", "approved-ko"), ("en", "Approved title", "approved-en")):
+                permalink = f"/{'en/' if lang == 'en' else ''}posts/{slug}.html"
+                text = (
+                    "---\n"
+                    f'title: "{title}"\n'
+                    f"series: easy-ai\nlang: {lang}\ndate: 2026-10-15\n"
+                    "translation_key: easy-ai-test\n"
+                    f'permalink: "{permalink}"\n'
+                    "published: false\ndraft: true\nnoindex: true\n---\n"
+                    f"<p>{title}</p>\n"
+                )
+                path = draft_dir / f"{slug}.md"
+                path.write_text(text, encoding="utf-8")
+                drafts.append({
+                    "lang": lang,
+                    "exact_draft_path": f"drafts/{path.name}",
+                    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                    "title": title,
+                    "date": "2026-10-15",
+                    "translation_key": "easy-ai-test",
+                    "permalink": permalink,
+                })
+            approval_path = root / "approval.json"
+            approval_path.write_text(json.dumps({
+                "schema_version": 2,
+                "publication_unit": "easy-ai-2026-10-15-bilingual",
+                "series": "easy-ai",
+                "approved_at": "2026-10-14T12:00:00+09:00",
+                "scheduled_publish_at": "2026-10-15T19:00:00+09:00",
+                "approval_text_literal": "정확한 한영 글 발행을 승인합니다.",
+                "drafts": drafts,
+            }, ensure_ascii=False), encoding="utf-8")
+            image_map = root / "images.json"
+            image_map.write_text("{}", encoding="utf-8")
+
+            sources = module.release_sources(root, approval_path, image_map)
+
+        self.assertEqual(set(sources), {("승인된 제목", "ko"), ("Approved title", "en")})
+        self.assertEqual(sources[("승인된 제목", "ko")]["labels"], ["easy-ai", "ko"])
+        self.assertIn("<p>승인된 제목</p>", sources[("승인된 제목", "ko")]["content"])
+        self.assertEqual(sources[("승인된 제목", "ko")]["source_path"], "drafts/approved-ko.md")
+
+    def test_approval_gate_rejects_changed_draft_before_payload_creation(self):
+        module = self._module()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "drafts").mkdir()
+            draft = root / "drafts" / "ko.md"
+            draft.write_text("changed after approval", encoding="utf-8")
+            approval = root / "approval.json"
+            approval.write_text("{}", encoding="utf-8")
+            image_map = root / "images.json"
+            image_map.write_text("{}", encoding="utf-8")
+            with self.assertRaisesRegex(module.BloggerReleaseError, "승인 원본"):
+                module.release_sources(root, approval, image_map)
 
     def test_pages_readback_is_optional_for_standalone_blogger_release(self):
         module = self._module()
