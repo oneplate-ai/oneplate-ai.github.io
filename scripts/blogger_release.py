@@ -70,6 +70,19 @@ def verify_pages_public_pair(
     return checked
 
 
+def optional_pages_readback(
+    approval: dict[str, Any],
+    pages_base_url: str,
+    *,
+    required: bool,
+    fetch: Callable[[str], str] = _fetch_public_html,
+) -> list[str]:
+    """Use Pages verification only when the transitional policy explicitly requires it."""
+    if not required:
+        return []
+    return verify_pages_public_pair(approval, pages_base_url, fetch=fetch)
+
+
 def verify_blogger_public_pair(
     sources: dict[tuple[str, str], dict[str, Any]],
     current: dict[tuple[str, str], tuple[str, dict[str, Any]]],
@@ -494,12 +507,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--token-path", type=Path, default=DEFAULT_TOKEN_PATH)
     parser.add_argument("--client-secret-path", type=Path, default=DEFAULT_CLIENT_SECRET_PATH)
     parser.add_argument("--pages-base-url", default="https://oneplate-ai.github.io")
+    parser.add_argument(
+        "--require-pages-readback",
+        action="store_true",
+        help="과도기 정책: Blogger release 전 Pages 공개 한·영 URL을 필수 검증",
+    )
     parser.add_argument("--apply", action="store_true", help="Blogger API에 실제 반영")
     args = parser.parse_args(argv)
     try:
         root = args.root.resolve()
         approval = validate_approval(args.approval.resolve(), root)
-        pages_urls = verify_pages_public_pair(approval, args.pages_base_url)
+        pages_urls = optional_pages_readback(
+            approval,
+            args.pages_base_url,
+            required=args.require_pages_readback,
+        )
         sources = release_sources(root, args.approval, [Path(item) for item in args.source], args.image_urls)
         token = fresh_access_token(args.token_path, args.client_secret_path)
         release = ReleaseClient(BloggerClient(token, args.blog_id))
@@ -507,6 +529,7 @@ def main(argv: list[str] | None = None) -> int:
         result: dict[str, Any] = {
             "mode": "apply" if args.apply else "plan",
             "sources": len(sources),
+            "pages_readback_required": args.require_pages_readback,
             "pages_readback": pages_urls,
             "changes": changes,
         }

@@ -134,6 +134,16 @@ class BloggerReleaseTests(unittest.TestCase):
             "https://pages.example/en/posts/en.html",
         ])
 
+    def test_pages_readback_is_optional_for_standalone_blogger_release(self):
+        module = self._module()
+        approval = {"drafts": [{"lang": "ko", "permalink": "/posts/ko.html", "title": "한국어 제목"}]}
+        def unavailable_fetch(_url):
+            raise AssertionError("standalone release must not fetch Pages")
+        self.assertEqual(
+            module.optional_pages_readback(approval, "https://pages.example", required=False, fetch=unavailable_fetch),
+            [],
+        )
+
     def test_language_switcher_update_preserves_series_navigation(self):
         module = self._module()
         sources = {
