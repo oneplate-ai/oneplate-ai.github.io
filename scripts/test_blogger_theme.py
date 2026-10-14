@@ -33,6 +33,11 @@ class BloggerThemeTests(unittest.TestCase):
             self.assertIn(marker, text)
         self.assertNotIn("{{", text)
         self.assertNotIn("{%", text)
+    def test_theme_is_self_hosted_from_pages_runtime_dependencies(self):
+        text = THEME.read_text(encoding="utf-8")
+        self.assertNotIn("oneplate-ai.github.io", text)
+        self.assertNotIn("@import", text)
+        self.assertIn("all-head-content", text)
 
 
 if __name__ == "__main__":
