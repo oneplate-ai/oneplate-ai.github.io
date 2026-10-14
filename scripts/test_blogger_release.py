@@ -294,6 +294,18 @@ class BloggerReleaseTests(unittest.TestCase):
             release.apply(sources, changes)
         self.assertEqual(release.client.published, ["ko-id", "en-id"])
 
+    def test_publish_failure_reports_attempted_draft_id(self):
+        module = self._module()
+        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
+        class FakeClient:
+            def publish_draft(self, _post_id, _when): raise module.BloggerApiError("ambiguous publish failure")
+        release = object.__new__(module.ReleaseClient)
+        release.client = FakeClient()
+        release.verify_staged_draft = lambda *_args: None
+        changes = [{"action": "publish_draft", "id": "en-draft-id", "key": source["key"]}]
+        with self.assertRaisesRegex(module.BloggerReleaseError, "failed=.*en-draft-id"):
+            release.apply({source["key"]: source}, changes)
+
     def test_live_update_failure_reports_already_published_counterpart(self):
         module = self._module()
         sources = {
@@ -409,6 +421,11 @@ class BloggerReleaseTests(unittest.TestCase):
         with self.assertRaises(module.BloggerReleaseError):
             module.ensure_image_mapping(
                 '<img src="https://user@oneplate-ai.github.io/assets/images/new.svg">',
+                {canonical: mapped_url},
+            )
+        with self.assertRaises(module.BloggerReleaseError):
+            module.ensure_image_mapping(
+                '<img src="https://oneplate-ai.github.io/legacy-image.png">',
                 {canonical: mapped_url},
             )
 

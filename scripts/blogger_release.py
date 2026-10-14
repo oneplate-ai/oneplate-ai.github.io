@@ -47,7 +47,7 @@ _VERIFICATION_NOTE_RE = re.compile(
 _ARTICLE_IMAGE_URL_RE = re.compile(
     r"(?P<url>(?:(?P<scheme>https?):)?//(?P<userinfo>[^/?#\s@]+@)?"
     r"(?P<host>[^/:?#\s]+)(?::(?P<port>\d+))?"
-    r"(?P<path>/assets/images/[^\"'\s,)>]+))",
+    r"(?P<path>/[^\"'\s,)>]+))",
     re.IGNORECASE,
 )
 
@@ -507,16 +507,19 @@ class ReleaseClient:
             ) from error
 
         published_posts: list[dict[str, str]] = []
+        failed_publish: dict[str, str] | None = None
         for post_id, source in prepared:
             try:
+                failed_publish = {"id": post_id, "language": str(source["language"]), "action": "publish_draft"}
                 self.client.publish_draft(post_id, str(source["publish_date"]))
                 published_posts.append({"id": post_id, "language": str(source["language"])})
+                failed_publish = None
             except BloggerApiError as error:
                 published_languages = {item["language"] for item in published_posts}
                 remaining = sorted({str(item["language"]) for _, item in prepared} - published_languages)
                 raise BloggerReleaseError(
                     "Blogger 한·영 공개가 부분 완료되었습니다. "
-                    f"published={published_posts}, remaining={remaining}; "
+                    f"published={published_posts}, failed={failed_publish}, remaining={remaining}; "
                     "승인 원본은 그대로 보존하고 실패한 언어만 동일 release unit으로 재시도하십시오."
                 ) from error
         completed_live: list[dict[str, Any]] = []
