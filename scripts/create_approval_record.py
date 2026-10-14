@@ -20,6 +20,7 @@ def main() -> int:
     parser.add_argument("--scheduled-publish-at", required=True)
     parser.add_argument("--approved-at", required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--blogger-image-map", type=Path, required=True, help="승인할 Blogger 이미지 URL mapping JSON")
     args = parser.parse_args()
     root = args.root.resolve()
     paths = [("ko", args.ko.resolve()), ("en", args.en.resolve())]
@@ -50,6 +51,12 @@ def main() -> int:
                 "translation_key": next(iter(keys)),
                 "permalink": permalink,
             })
+        image_map = args.blogger_image_map.resolve()
+        if not image_map.is_file():
+            raise ValueError(f"Blogger 이미지 URL mapping 파일이 없습니다: {image_map}")
+        image_map_data = json.loads(image_map.read_text(encoding="utf-8"))
+        if not isinstance(image_map_data, dict):
+            raise ValueError("Blogger 이미지 URL mapping은 JSON 객체여야 합니다.")
         record = {
             "schema_version": 2,
             "publication_unit": f"{series_value}-{date_value}-bilingual",
@@ -57,6 +64,7 @@ def main() -> int:
             "approved_at": args.approved_at,
             "scheduled_publish_at": args.scheduled_publish_at,
             "approval_text_literal": args.approval_text,
+            "blogger_image_map_sha256": sha256(image_map),
             "drafts": drafts,
         }
         output = args.output.resolve()

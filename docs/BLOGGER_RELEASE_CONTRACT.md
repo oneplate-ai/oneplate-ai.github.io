@@ -8,21 +8,31 @@ Blogger는 GitHub Pages의 HTML 복제본이 아니라, 동일한 승인 원본�
 
 ## 2. 승인 원본과 허용 변환
 
-하나의 release unit은 다음으로 구성됩니다.
+하나의 Blogger release unit은 다음으로 구성됩니다.
 
 1. schema v2 승인 기록의 한·영 초안 경로·SHA-256·제목·날짜·translation key·permalink
-2. 해당 승인 초안에서 허용된 공개 변환만 적용한 한·영 `_posts/` 파일
-3. Blogger 이미지 URL 매핑
+2. 승인된 한·영 `drafts/` 원본 자체. 발행기는 허용된 공개 상태 변환만 적용해 Blogger payload를 직접 만듭니다.
+3. 승인 기록의 `blogger_image_map_sha256`과 바이트 단위로 일치하는 Blogger 이미지 URL 매핑. 매핑 대상은 HTTPS Google/Blogger 미디어 URL이어야 하며 Pages URL은 거부합니다.
 
-공개 `_posts/` 파일에는 다음 이외의 내용 변경이 허용되지 않습니다.
+GitHub Pages `_posts/`, 빌드, 공개 URL은 Blogger payload의 원본이나 기본 실행 전제조건이 아닙니다. 과도기 Pages read-back은 명시적 옵션으로 추가할 수 있습니다.
+
+Blogger payload에는 다음 이외의 원문 변경이 허용되지 않습니다.
 
 - `published: false`를 `published: true`로 변경
 - `draft`와 `noindex` front matter 제거
-- 검증 문구의 `이 초안은`/`This draft`를 `이번 게시글은`/`This post`로 변경
+- 검증 문구 블록(`<p>` 또는 `<aside>`의 `post-verification` class) 내부의 `이 초안은`/`This draft`를 `이번 게시글은`/`This post`로 변경
 
-Blogger release는 공개 파일이 위 변환과 정확히 일치하지 않으면 중단합니다.
+Blogger release는 payload가 승인 초안에서 위 허용 변환만 거쳤음을 검증한 뒤 진행합니다.
 
 ## 3. 독립 실행 순서
+
+운영 호출은 승인 기록만 지정해 읽기 전용 계획부터 만듭니다.
+
+```sh
+python3 scripts/blogger_release.py --root /path/to/repository --approval /path/outside-git/approvals/<unit>.json --image-urls /path/to/approved-blogger-image-map.json
+```
+
+이 실행은 `_posts/` 경로를 받지 않으며, Pages URL을 기본 조회하지 않습니다. `--image-urls` 파일은 승인 기록의 `blogger_image_map_sha256`과 정확히 일치해야 합니다. 실제 쓰기는 같은 명령에 명시적으로 `--apply`를 추가할 때만 시작합니다. scheduler 연결과 자동 승인 실행은 이 계약에 포함되지 않으며 별도 단계입니다.
 
 1. Blogger release는 `(title, language)`를 식별자로 현재 LIVE·DRAFT 글을 읽습니다.
 2. 각 언어 글은 다음 중 하나만 실행합니다.
@@ -38,7 +48,7 @@ Blogger release는 공개 파일이 위 변환과 정확히 일치하지 않으�
 
 `--apply`는 각 Blogger 글을 미래 시각으로 예약하지 않습니다. 이 명령은 실행 시점에 두 언어가 모두 LIVE이며 공개 URL로 검증되는 것을 전제로 합니다. 따라서 `scheduled_publish_at`이 아직 미래라면 변경 전에 중단하며, 예약 시각 이후 동일 승인 release unit으로 실행합니다.
 
-`--apply`가 없는 실행은 계획과 선택한 Pages 선행 검증만 수행하며 Blogger 글을 변경하지 않습니다.
+`--apply`가 없는 실행은 계획과 선택한 Pages read-back만 수행하며 Blogger 글을 변경하지 않습니다.
 
 ## 4. 독립성 조건
 
