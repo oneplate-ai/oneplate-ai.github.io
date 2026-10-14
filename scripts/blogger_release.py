@@ -7,13 +7,14 @@ GitHub Pages public posts, URLs, builds, or deployment state.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
 from blogger_adapter import build_blogger_payload, inject_language_switcher
@@ -35,6 +36,19 @@ class BloggerReleaseError(RuntimeError):
 _LANGUAGE_SWITCHER_RE = re.compile(
     r"\s*<nav\b[^>]*class=[\"'][^\"']*\boneplate-language-switcher\b[^\"']*[\"'][^>]*>.*?</nav>\s*",
     re.IGNORECASE | re.DOTALL,
+)
+_DRAFT_FRONT_MATTER_RE = re.compile(r"\A---\n(?P<front>.*?)\n---\n(?P<body>.*)\Z", re.DOTALL)
+_VERIFICATION_NOTE_RE = re.compile(
+    r"(?P<open><(?:p|aside)\b[^>]*\bclass=[\"'][^\"']*\bpost-verification\b[^\"']*[\"'][^>]*>)"
+    r"(?P<body>.*?)"
+    r"(?P<close></(?:p|aside)>)",
+    re.IGNORECASE | re.DOTALL,
+)
+_ARTICLE_IMAGE_URL_RE = re.compile(
+    r"(?P<url>(?:(?P<scheme>https?):)?//(?P<userinfo>[^/?#\s@]+@)?"
+    r"(?P<host>[^/:?#\s]+)(?::(?P<port>\d+))?"
+    r"(?P<path>/assets/images/[^\"'\s,)>]+))",
+    re.IGNORECASE,
 )
 
 
@@ -122,10 +136,26 @@ def require_immediate_publish_time(publish_date: str, *, now: datetime | None = 
 
 
 def public_copy_from_draft(text: str) -> str:
-    """Apply the only publication changes permitted by the Pages release gate."""
-    result = re.sub(r"^published:\s*false\s*$", "published: true", text, flags=re.MULTILINE)
-    result = re.sub(r"^(?:draft|noindex):[^\n]*\n", "", result, flags=re.MULTILINE)
-    return result.replace("이 초안은", "이번 게시글은").replace("This draft", "This post")
+    """Apply only the approved front-matter and marked verification-note changes."""
+    match = _DRAFT_FRONT_MATTER_RE.match(text)
+    if not match:
+        raise BloggerReleaseError("승인 초안 front matter가 없거나 형식이 올바르지 않습니다.")
+    front_lines: list[str] = []
+    for line in match.group("front").splitlines():
+        key = line.split(":", 1)[0].strip() if ":" in line else ""
+        if key in {"draft", "noindex"}:
+            continue
+        if key == "published" and re.fullmatch(r"published:\s*false\s*", line):
+            front_lines.append("published: true")
+        else:
+            front_lines.append(line)
+
+    def replace_verification_note(note: re.Match[str]) -> str:
+        body = note.group("body").replace("이 초안은", "이번 게시글은").replace("This draft", "This post")
+        return note.group("open") + body + note.group("close")
+
+    body = _VERIFICATION_NOTE_RE.sub(replace_verification_note, match.group("body"))
+    return "---\n" + "\n".join(front_lines) + "\n---\n" + body
 
 
 def _language(payload: dict[str, object], path: Path) -> str:
@@ -142,27 +172,59 @@ def _image_urls(path: Path) -> dict[str, str]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict) or not all(isinstance(key, str) and isinstance(value, str) for key, value in data.items()):
         raise BloggerReleaseError("Blogger 이미지 URL mapping 형식이 올바르지 않습니다.")
+    for name, value in data.items():
+        if not name or Path(name).is_absolute() or ".." in Path(name).parts:
+            raise BloggerReleaseError(f"Blogger 이미지 mapping 키가 올바르지 않습니다: {name!r}")
+        parsed = urlparse(value)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme != "https" or not host or host == "oneplate-ai.github.io":
+            raise BloggerReleaseError(f"Blogger 이미지 URL은 Pages가 아닌 HTTPS URL이어야 합니다: {value}")
+        if not (host.endswith(".googleusercontent.com") or host.endswith(".bp.blogspot.com")):
+            raise BloggerReleaseError(f"Blogger 이미지 URL host가 허용되지 않습니다: {value}")
     return {f"https://oneplate-ai.github.io/assets/images/{name}": url for name, url in data.items()}
 
 
+def pages_image_sources(content: str) -> dict[str, str]:
+    """Return every Pages image spelling mapped to its canonical map key."""
+    sources: dict[str, str] = {}
+    for match in _ARTICLE_IMAGE_URL_RE.finditer(content):
+        host = match.group("host").rstrip(".").lower()
+        if host != "oneplate-ai.github.io":
+            continue
+        if match.group("userinfo"):
+            raise BloggerReleaseError("Pages 이미지 URL에 userinfo가 포함될 수 없습니다.")
+        sources[match.group("url")] = "https://oneplate-ai.github.io" + match.group("path")
+    return sources
+
+
 def apply_image_mapping(content: str, image_urls: dict[str, str]) -> str:
-    """Replace each exact Pages image URL everywhere it occurs in post HTML."""
-    updated = content
-    for old_url, new_url in image_urls.items():
-        updated = updated.replace(old_url, new_url)
-    return updated
+    """Replace every normalized Pages image spelling with approved Blogger media."""
+    def replace(match: re.Match[str]) -> str:
+        host = match.group("host").rstrip(".").lower()
+        if host != "oneplate-ai.github.io":
+            return match.group("url")
+        if match.group("userinfo"):
+            raise BloggerReleaseError("Pages 이미지 URL에 userinfo가 포함될 수 없습니다.")
+        return image_urls["https://oneplate-ai.github.io" + match.group("path")]
+    return _ARTICLE_IMAGE_URL_RE.sub(replace, content)
 
 
 def ensure_image_mapping(content: str, image_urls: dict[str, str]) -> None:
-    """Fail closed when a Pages-hosted article image lacks a Blogger URL."""
-    sources = re.findall(
-        r"https://oneplate-ai\.github\.io/assets/images/[^\"'\s,)>]+",
-        content,
-        flags=re.IGNORECASE,
-    )
-    missing = sorted(set(sources) - set(image_urls))
+    """Fail closed when any Pages-hosted article image lacks a Blogger URL."""
+    sources = pages_image_sources(content)
+    missing = sorted(set(sources.values()) - set(image_urls))
     if missing:
         raise BloggerReleaseError("Blogger 이미지 URL mapping이 없습니다: " + ", ".join(missing))
+
+
+def verify_image_map_approval(approval: dict[str, Any], image_url_path: Path) -> None:
+    """Require the exact image map to be cryptographically bound to this release."""
+    expected = approval.get("blogger_image_map_sha256")
+    if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
+        raise BloggerReleaseError("Blogger release 승인 기록에 blogger_image_map_sha256가 필요합니다.")
+    actual = hashlib.sha256(image_url_path.read_bytes()).hexdigest()
+    if actual != expected:
+        raise BloggerReleaseError("Blogger 이미지 URL mapping SHA-256이 승인 기록과 일치하지 않습니다.")
 
 
 def release_sources(
@@ -177,6 +239,7 @@ def release_sources(
         raise BloggerReleaseError(f"승인 원본 검증을 통과하지 못했습니다: {error}") from error
 
     publish_date = str(approval["scheduled_publish_at"])
+    verify_image_map_approval(approval, image_url_path)
     image_urls = _image_urls(image_url_path)
     sources: dict[tuple[str, str], dict[str, Any]] = {}
     for draft_item in approval["drafts"]:
@@ -186,7 +249,10 @@ def release_sources(
         try:
             payload = build_blogger_payload(
                 public_text,
-                public_base_url="https://oneplate-ai.blogspot.com",
+                # Canonicalize draft-local asset paths into the legacy source
+                # namespace only so the mandatory Blogger image map can replace
+                # them before any API write. This does not fetch or publish Pages.
+                public_base_url="https://oneplate-ai.github.io",
                 draft=False,
             )
         except ValueError as error:
@@ -196,6 +262,8 @@ def release_sources(
             raise BloggerReleaseError(f"승인 기록과 초안 payload가 일치하지 않습니다: {draft_item['exact_draft_path']}")
         ensure_image_mapping(str(payload["content"]), image_urls)
         content = apply_image_mapping(str(payload["content"]), image_urls)
+        if pages_image_sources(content):
+            raise BloggerReleaseError(f"Blogger payload에 Pages 이미지 URL이 남았습니다: {draft_item['exact_draft_path']}")
         key = (str(payload["title"]), language)
         if key in sources:
             raise BloggerReleaseError(f"Blogger title/language key가 중복됩니다: {key}")
@@ -267,6 +335,20 @@ def plan_release(
             changes.append({"action": action, "id": str(post["id"]), "key": key})
         else:
             raise BloggerReleaseError(f"지원하지 않는 Blogger state: {state}")
+
+    if {str(source["language"]) for source in sources.values()} == {"ko", "en"}:
+        live_keys = {key for key, actual in current.items() if key in sources and actual[0] == "LIVE"}
+        if live_keys == set(sources):
+            switcher_keys = {
+                next(source["key"] for source in sources.values() if source["language"] == update["language"])
+                for update in language_switcher_updates(sources, current)
+            }
+            switcher_keys.update(tuple(change["key"]) for change in changes if change["action"] == "update_live")
+            for key in sorted(switcher_keys):
+                post_id = str(current[key][1]["id"])
+                changes.append({"action": "update_language_switcher", "id": post_id, "key": key})
+        else:
+            changes.append({"action": "update_language_switchers_after_publish", "keys": sorted(sources)})
     return changes
 
 
@@ -373,7 +455,21 @@ class ReleaseClient:
         prepared: list[tuple[str, dict[str, Any]]] = []
         live_updates: list[tuple[str, dict[str, Any], tuple[str, str], str]] = []
         prepared_mutations: list[str] = []
+        planned_switcher_keys: set[tuple[str, str]] = set()
+        switchers_after_publish = False
+        release_changes: list[dict[str, Any]] = []
         for change in changes:
+            action = change["action"]
+            if action == "update_language_switcher":
+                planned_switcher_keys.add(tuple(change["key"]))
+            elif action == "update_language_switchers_after_publish":
+                switchers_after_publish = True
+                planned_switcher_keys.update(tuple(key) for key in change["keys"])
+            else:
+                release_changes.append(change)
+        if switchers_after_publish and planned_switcher_keys != set(sources):
+            raise BloggerReleaseError("Blogger 언어 전환 링크 post-publish 계획이 승인 한·영 쌍과 일치하지 않습니다.")
+        for change in release_changes:
             source = sources[tuple(change["key"])]
             payload = {"title": source["title"], "labels": source["labels"], "content": source["content"]}
             action = change["action"]
@@ -449,7 +545,17 @@ class ReleaseClient:
         completed_switchers: list[dict[str, Any]] = []
         failed_switcher: dict[str, Any] | None = None
         try:
-            for update in language_switcher_updates(sources, current):
+            switcher_updates = language_switcher_updates(sources, current)
+            actual_switcher_keys = {
+                next(source["key"] for source in sources.values() if source["language"] == update["language"])
+                for update in switcher_updates
+            }
+            if actual_switcher_keys != planned_switcher_keys:
+                raise BloggerReleaseError(
+                    "Blogger 언어 전환 링크 실제 변경이 계획과 일치하지 않습니다: "
+                    f"planned={sorted(planned_switcher_keys)}, actual={sorted(actual_switcher_keys)}"
+                )
+            for update in switcher_updates:
                 source = next(item for item in sources.values() if item["language"] == update["language"])
                 failed_switcher = {"id": update["id"], "language": update["language"]}
                 updated = self.client.update_post(str(update["id"]), {
@@ -464,7 +570,8 @@ class ReleaseClient:
         except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
                 "Blogger 언어 전환 링크 갱신이 부분 완료되었습니다. "
-                f"completed={completed_switchers}, failed={failed_switcher}; "
+                f"prepared={prepared_mutations}, published={published_languages}, "
+                f"live_completed={completed_live}, switcher_completed={completed_switchers}, failed={failed_switcher}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
         verify_language_switchers(sources, self.verify(sources))
