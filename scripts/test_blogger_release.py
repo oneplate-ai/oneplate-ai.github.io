@@ -273,6 +273,27 @@ class BloggerReleaseTests(unittest.TestCase):
         self.assertIn({"action": "update_language_switcher", "id": "ko-id", "key": ("한국어 제목", "ko")}, plan)
         self.assertNotIn({"action": "update_language_switcher", "id": "en-id", "key": ("English title", "en")}, plan)
 
+    def test_post_publish_readback_failure_reports_published_ids(self):
+        module = self._module()
+        sources = {
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+        }
+        class FakeClient:
+            def __init__(self): self.published = []
+            def publish_draft(self, post_id, _when): self.published.append(post_id)
+        release = object.__new__(module.ReleaseClient)
+        release.client = FakeClient()
+        release.verify_staged_draft = lambda *_args: None
+        release.verify = lambda _sources: (_ for _ in ()).throw(module.BloggerReleaseError("read-back failed"))
+        changes = [
+            {"action": "publish_draft", "id": "ko-id", "key": ("한국어 제목", "ko")},
+            {"action": "publish_draft", "id": "en-id", "key": ("English title", "en")},
+        ]
+        with self.assertRaisesRegex(module.BloggerReleaseError, "published=.*ko-id.*en-id"):
+            release.apply(sources, changes)
+        self.assertEqual(release.client.published, ["ko-id", "en-id"])
+
     def test_apply_rejects_unplanned_switcher_write_before_api_mutation(self):
         module = self._module()
         sources = {

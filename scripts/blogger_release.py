@@ -506,20 +506,21 @@ class ReleaseClient:
                 "Blogger 한·영 초안 준비 read-back이 실패했습니다. 공개 처리는 시작하지 않았습니다."
             ) from error
 
-        published_languages: list[str] = []
+        published_posts: list[dict[str, str]] = []
         for post_id, source in prepared:
             try:
                 self.client.publish_draft(post_id, str(source["publish_date"]))
-                published_languages.append(str(source["language"]))
+                published_posts.append({"id": post_id, "language": str(source["language"])})
             except BloggerApiError as error:
-                remaining = sorted({str(item["language"]) for _, item in prepared} - set(published_languages))
+                published_languages = {item["language"] for item in published_posts}
+                remaining = sorted({str(item["language"]) for _, item in prepared} - published_languages)
                 raise BloggerReleaseError(
                     "Blogger 한·영 공개가 부분 완료되었습니다. "
-                    f"published={published_languages}, remaining={remaining}; "
+                    f"published={published_posts}, remaining={remaining}; "
                     "승인 원본은 그대로 보존하고 실패한 언어만 동일 release unit으로 재시도하십시오."
                 ) from error
-        navigation_expectations = {key: navigation for _, _, key, navigation in live_updates if navigation}
         completed_live: list[dict[str, Any]] = []
+        navigation_expectations = {key: navigation for _, _, key, navigation in live_updates if navigation}
         failed_live: dict[str, Any] | None = None
         try:
             for post_id, payload, key, _ in live_updates:
@@ -534,14 +535,21 @@ class ReleaseClient:
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
 
-        current = self.verify(sources)
-        for key, expected_navigation in navigation_expectations.items():
-            actual = current.get(key)
-            if actual is None:
-                raise BloggerReleaseError(f"Blogger 시리즈 목록 read-back 대상을 찾지 못했습니다: {key}")
-            navigation = NAV_PATTERN.search(str(actual[1].get("content", "")))
-            if navigation is None or navigation.group(0) != expected_navigation:
-                raise BloggerReleaseError(f"Blogger 시리즈 목록 보존 read-back 실패: {key}")
+        try:
+            current = self.verify(sources)
+            for key, expected_navigation in navigation_expectations.items():
+                actual = current.get(key)
+                if actual is None:
+                    raise BloggerReleaseError(f"Blogger 시리즈 목록 read-back 대상을 찾지 못했습니다: {key}")
+                navigation = NAV_PATTERN.search(str(actual[1].get("content", "")))
+                if navigation is None or navigation.group(0) != expected_navigation:
+                    raise BloggerReleaseError(f"Blogger 시리즈 목록 보존 read-back 실패: {key}")
+        except (BloggerApiError, BloggerReleaseError) as error:
+            raise BloggerReleaseError(
+                "Blogger 공개 후 read-back이 실패했습니다. "
+                f"prepared={prepared_mutations}, published={published_posts}, live_completed={completed_live}; "
+                "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
+            ) from error
         completed_switchers: list[dict[str, Any]] = []
         failed_switcher: dict[str, Any] | None = None
         try:
@@ -570,11 +578,19 @@ class ReleaseClient:
         except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
                 "Blogger 언어 전환 링크 갱신이 부분 완료되었습니다. "
-                f"prepared={prepared_mutations}, published={published_languages}, "
+                f"prepared={prepared_mutations}, published={published_posts}, "
                 f"live_completed={completed_live}, switcher_completed={completed_switchers}, failed={failed_switcher}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
-        verify_language_switchers(sources, self.verify(sources))
+        try:
+            verify_language_switchers(sources, self.verify(sources))
+        except (BloggerApiError, BloggerReleaseError) as error:
+            raise BloggerReleaseError(
+                "Blogger 언어 전환 링크 최종 read-back이 실패했습니다. "
+                f"prepared={prepared_mutations}, published={published_posts}, "
+                f"live_completed={completed_live}, switcher_completed={completed_switchers}; "
+                "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
+            ) from error
 
     def verify(self, sources: dict[tuple[str, str], dict[str, Any]]) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
         current = self.current()
