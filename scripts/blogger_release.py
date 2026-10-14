@@ -447,7 +447,7 @@ class ReleaseClient:
         current.update(scheduled)
         return current
 
-    def apply(self, sources: dict[tuple[str, str], dict[str, Any]], changes: list[dict[str, Any]]) -> None:
+    def apply(self, sources: dict[tuple[str, str], dict[str, Any]], changes: list[dict[str, Any]]) -> dict[str, Any]:
         publish_times = {str(source["publish_date"]) for source in sources.values()}
         if len(publish_times) != 1:
             raise BloggerReleaseError("Blogger release 한·영 publish_date가 서로 다릅니다.")
@@ -531,6 +531,7 @@ class ReleaseClient:
         except BloggerApiError as error:
             raise BloggerReleaseError(
                 "Blogger 기존 LIVE 글 갱신이 부분 완료되었습니다. "
+                f"prepared={prepared_mutations}, published={published_posts}, "
                 f"completed={completed_live}, failed={failed_live}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
@@ -591,6 +592,12 @@ class ReleaseClient:
                 f"live_completed={completed_live}, switcher_completed={completed_switchers}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
+        return {
+            "prepared": prepared_mutations,
+            "published": published_posts,
+            "live_completed": completed_live,
+            "switcher_completed": completed_switchers,
+        }
 
     def verify(self, sources: dict[tuple[str, str], dict[str, Any]]) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
         current = self.current()
@@ -646,9 +653,15 @@ def main(argv: list[str] | None = None) -> int:
             "changes": changes,
         }
         if args.apply:
-            release.apply(sources, changes)
-            current = release.verify(sources)
-            result["blogger_readback"] = verify_blogger_public_pair(sources, current)
+            mutation_state = release.apply(sources, changes)
+            try:
+                current = release.verify(sources)
+                result["blogger_readback"] = verify_blogger_public_pair(sources, current)
+            except (BloggerApiError, BloggerReleaseError) as error:
+                raise BloggerReleaseError(
+                    "Blogger apply 후 공개 URL 검증이 실패했습니다. "
+                    f"mutations={mutation_state}; 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
+                ) from error
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError, KeyError, json.JSONDecodeError, BloggerApiError, BloggerReleaseError) as error:
