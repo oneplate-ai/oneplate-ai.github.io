@@ -250,12 +250,117 @@ class BloggerReleaseTests(unittest.TestCase):
             ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         plan = module.plan_release(sources, current)
-        self.assertEqual({item["action"] for item in plan}, {"update_language_switcher"})
-        self.assertEqual({tuple(item["key"]) for item in plan}, set(sources))
+        self.assertEqual(
+            {tuple(item["key"]) for item in plan if item["action"] == "update_language_switcher"},
+            set(sources),
+        )
+
+    def test_new_bilingual_posts_plan_series_navigation_and_switchers_after_publish(self):
+        module = self._module()
+        sources = {
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+        }
+        plan = module.plan_release(sources, {})
+        self.assertIn(
+            {"action": "update_series_navigation_and_language_switchers_after_publish", "keys": sorted(sources)},
+            plan,
+        )
+
+    def test_series_navigation_updates_render_new_live_pair(self):
+        module = self._module()
+        sources = {
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+        }
+        current = {
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+        }
+        updates = module.series_navigation_updates(sources, current)
+        self.assertEqual({update["id"] for update in updates}, {"ko-id", "en-id"})
+        self.assertTrue(all("oneplate-series-navigation" in update["content"] for update in updates))
+
+    def test_live_bilingual_pair_missing_navigation_is_disclosed_in_plan(self):
+        module = self._module()
+        sources = {
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+        }
+        current = {
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+        }
+        plan = module.plan_release(sources, current)
+        self.assertEqual(
+            {tuple(item["key"]) for item in plan if item["action"] == "update_series_navigation"},
+            set(sources),
+        )
+
+    def test_apply_writes_planned_series_navigation_before_switchers(self):
+        module = self._module()
+        sources = {
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+        }
+        current = {
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+        }
+        class FakeClient:
+            def __init__(self): self.calls = []
+            def update_post(self, post_id, payload):
+                self.calls.append((post_id, payload))
+                for state, post in current.values():
+                    if state == "LIVE" and post["id"] == post_id:
+                        post["content"] = payload["content"]
+                        return {"content": payload["content"]}
+                raise AssertionError(post_id)
+        release = object.__new__(module.ReleaseClient)
+        release.client = FakeClient()
+        release.verify = lambda _sources: current
+        changes = [{"action": "update_series_navigation_and_language_switchers_after_publish", "keys": sorted(sources)}]
+        result = release.apply(sources, changes)
+        self.assertEqual(len(release.client.calls), 4)
+        self.assertEqual(len(result["navigation_completed"]), 2)
+        self.assertEqual(len(result["switcher_completed"]), 2)
+        self.assertTrue(all("oneplate-series-navigation" in post["content"] for _, post in current.values()))
+        self.assertTrue(all("oneplate-language-switcher" in post["content"] for _, post in current.values()))
+
+    def test_switcher_failure_reports_completed_navigation(self):
+        module = self._module()
+        sources = {
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+        }
+        current = {
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+        }
+        class FakeClient:
+            def __init__(self): self.calls = 0
+            def update_post(self, post_id, payload):
+                self.calls += 1
+                if self.calls == 3:
+                    raise module.BloggerApiError("switcher write failed")
+                for state, post in current.values():
+                    if state == "LIVE" and post["id"] == post_id:
+                        post["content"] = payload["content"]
+                        return {"content": payload["content"]}
+                raise AssertionError(post_id)
+        release = object.__new__(module.ReleaseClient)
+        release.client = FakeClient()
+        release.verify = lambda _sources: current
+        changes = [{"action": "update_series_navigation_and_language_switchers_after_publish", "keys": sorted(sources)}]
+        with self.assertRaises(module.BloggerReleaseError) as caught:
+            release.apply(sources, changes)
+        self.assertIn("navigation_completed", str(caught.exception))
+        self.assertIn("ko-id", str(caught.exception))
+        self.assertIn("en-id", str(caught.exception))
 
     def test_live_body_update_also_plans_that_post_switcher_repair(self):
         module = self._module()
@@ -265,8 +370,8 @@ class BloggerReleaseTests(unittest.TestCase):
         }
         en_switcher = module.inject_language_switcher("<p>approved en</p>", current_lang="en", ko_url="https://blog.example/ko", en_url="https://blog.example/en")
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>old ko</p>", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": en_switcher, "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>old ko</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": en_switcher, "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         plan = module.plan_release(sources, current)
         self.assertIn({"action": "update_live", "id": "ko-id", "key": ("한국어 제목", "ko"), "navigation": ""}, plan)
@@ -356,8 +461,8 @@ class BloggerReleaseTests(unittest.TestCase):
             ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         class FakeClient:
             def __init__(self): self.calls = []
