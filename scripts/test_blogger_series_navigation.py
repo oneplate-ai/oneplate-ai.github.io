@@ -6,6 +6,8 @@ from blogger_series_navigation import (
     NAV_START,
     apply_image_url_map,
     language_and_series,
+    language_pair_urls,
+    plan_changes,
     render_series_navigation,
     replace_navigation,
 )
@@ -69,6 +71,21 @@ class BloggerSeriesNavigationTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertIn(f'src="{new}"', updated)
         self.assertIn(f'href="{old}"', updated)
+
+    def test_pairs_same_series_and_publish_instant_for_counterpart_switchers(self):
+        korean = {"id": "ko", "title": "한국어", "url": "https://blog.example/ko", "published": "2026-10-12T19:00:00+09:00", "labels": ["ko", "today-ai-bite"], "content": "<p>본문</p>"}
+        english = {"id": "en", "title": "English", "url": "https://blog.example/en", "published": "2026-10-12T19:00:00+09:00", "labels": ["en", "today-ai-bite"], "content": "<p>body</p>"}
+        pairs = language_pair_urls([korean, english])
+        self.assertEqual(pairs["ko"], ("https://blog.example/ko", "https://blog.example/en"))
+        post_changes, _ = plan_changes([korean, english], [], {})
+        changed = {post["id"]: content for post, content in post_changes}
+        self.assertIn('href="https://blog.example/en"', changed["ko"])
+        self.assertIn('href="https://blog.example/ko"', changed["en"])
+        self.assertIn(NAV_START, changed["ko"])
+    def test_rejects_an_unpaired_language_post(self):
+        korean = {"id": "ko", "title": "한국어", "url": "https://blog.example/ko", "published": "2026-10-12T19:00:00+09:00", "labels": ["ko", "today-ai-bite"], "content": "<p>본문</p>"}
+        with self.assertRaisesRegex(ValueError, "불완전"):
+            language_pair_urls([korean])
 
 
 if __name__ == "__main__":

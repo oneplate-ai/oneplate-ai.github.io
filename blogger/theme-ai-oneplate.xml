@@ -15,10 +15,19 @@
   <link crossorigin='anonymous' href='https://fonts.gstatic.com' rel='preconnect'/>
   <link href='https://fonts.googleapis.com/css2?family=Gowun+Dodum&amp;family=Noto+Sans+KR:wght@400;500;600;700&amp;display=swap' rel='stylesheet'/>
   <b:skin><![CDATA[
-    /* Pilot theme: the Pages stylesheet remains the design reference.
-       Vendor this CSS into the Blogger theme before final migration. */
-    @import url('https://oneplate-ai.github.io/styles.css');
-    .blogger-shell { width: min(1120px, calc(100% - 48px)); margin: 0 auto; }
+    /* Self-contained Blogger theme: it must not fetch Pages assets at runtime. */
+    :root { --paper:#f8f4ea; --paper-deep:#eee7d7; --ink:#202720; --muted:#667064; --green:#244e3d; --accent:#bd6346; --line:#d8d1c1; --sans:"Noto Sans KR",system-ui,sans-serif; --display:"Gowun Dodum","Noto Sans KR",sans-serif; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.7; word-break:keep-all; }
+    a { color:inherit; }
+    .skip-link { position:absolute; left:-999px; }
+    .skip-link:focus { left:16px; top:16px; z-index:4; padding:8px 12px; background:var(--ink); color:#fff; }
+    .site-header { width:min(1220px,calc(100% - 48px)); min-height:92px; margin:0 auto; display:flex; align-items:center; gap:22px; border-bottom:1px solid var(--line); }
+    .brand { color:var(--green); font-family:var(--display); font-size:22px; font-weight:400; letter-spacing:-.05em; text-decoration:none; white-space:nowrap; }
+    .site-header nav { display:flex; gap:22px; margin-left:auto; color:var(--muted); font-size:13px; }
+    .site-header nav a { text-decoration:none; }
+    .site-header nav a:hover { color:var(--green); }
+    .blogger-shell { width:min(1120px,calc(100% - 48px)); margin:0 auto; }
     .blogger-post-meta { color: var(--muted); font-size: 12px; margin: 0 0 18px; }
     .blogger-labels { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 28px; }
     .blogger-labels a { color: var(--green); font-size: 12px; text-decoration: none; }
@@ -39,9 +48,7 @@
 <body>
   <a class='skip-link' href='#content'>본문으로 건너뛰기</a>
   <header class='site-header'>
-    <a aria-label='AI 한 접시 홈' class='brand' expr:href='data:blog.homepageUrl'>
-      <img alt='AI 한 접시' class='brand-logo horizontal' src='https://oneplate-ai.github.io/assets/brand/logo-horizontal-tight.png'/>
-    </a>
+    <a aria-label='AI 한 접시 홈' class='brand' expr:href='data:blog.homepageUrl'>AI 한 접시</a>
     <nav aria-label='주요 내비게이션'>
       <a expr:href='data:blog.homepageUrl + "search/label/today-ai-bite"'>오늘 AI 한입</a>
       <a expr:href='data:blog.homepageUrl + "search/label/weekly-ai"'>주간 AI 한 접시</a>
