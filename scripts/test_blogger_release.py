@@ -241,7 +241,7 @@ class BloggerReleaseTests(unittest.TestCase):
                 module._image_urls(path)
             path.write_text("{}", encoding="utf-8")
             with self.assertRaises(module.BloggerReleaseError):
-                module.verify_image_map_approval({"blogger_image_map_sha256": "0" * 64}, path)
+                module.verify_image_map_approval({"blogger_image_map_sha256": "0" * 64}, path.read_bytes())
 
     def test_bilingual_switcher_writes_are_disclosed_in_the_plan(self):
         module = self._module()
@@ -293,6 +293,28 @@ class BloggerReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(module.BloggerReleaseError, "published=.*ko-id.*en-id"):
             release.apply(sources, changes)
         self.assertEqual(release.client.published, ["ko-id", "en-id"])
+
+    def test_staged_draft_readback_failure_reports_prepared_ids(self):
+        module = self._module()
+        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
+        release = object.__new__(module.ReleaseClient)
+        release.client = object()
+        release.verify_staged_draft = lambda *_args: (_ for _ in ()).throw(module.BloggerReleaseError("staged read-back failed"))
+        changes = [{"action": "update_draft_then_publish", "id": "draft-42", "key": source["key"]}]
+        class UpdatingClient:
+            def update_draft(self, *_args): pass
+        release.client = UpdatingClient()
+        with self.assertRaisesRegex(module.BloggerReleaseError, "prepared=.*draft-42"):
+            release.apply({source["key"]: source}, changes)
+
+    def test_create_draft_response_without_id_reports_failed_action(self):
+        module = self._module()
+        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
+        release = object.__new__(module.ReleaseClient)
+        release.create_fresh_draft = lambda _payload: {}
+        changes = [{"action": "create_draft_then_publish", "key": source["key"]}]
+        with self.assertRaisesRegex(module.BloggerReleaseError, "failed=.*create_draft_then_publish"):
+            release.apply({source["key"]: source}, changes)
 
     def test_publish_failure_reports_attempted_draft_id(self):
         module = self._module()
@@ -428,6 +450,16 @@ class BloggerReleaseTests(unittest.TestCase):
                 '<img src="https://oneplate-ai.github.io/legacy-image.png">',
                 {canonical: mapped_url},
             )
+        with self.assertRaises(module.BloggerReleaseError):
+            module.ensure_image_mapping(
+                '<img src="https://oneplate-ai&#46;github.io/assets/images/new.svg">',
+                {canonical: mapped_url},
+            )
+        with tempfile.TemporaryDirectory() as temp:
+            unsafe_map = Path(temp) / "unsafe-images.json"
+            unsafe_map.write_text(json.dumps({"new.svg": 'https://lh3.googleusercontent.com/a.png" onerror="alert(1)'}), encoding="utf-8")
+            with self.assertRaises(module.BloggerReleaseError):
+                module._image_urls(unsafe_map)
 
     def test_future_blogger_publish_time_is_rejected_before_writes(self):
         module = self._module()

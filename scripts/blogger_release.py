@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import sys
+from html import unescape
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -168,26 +169,35 @@ def _language(payload: dict[str, object], path: Path) -> str:
     return languages[0]
 
 
-def _image_urls(path: Path) -> dict[str, str]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+def _image_urls_bytes(raw: bytes) -> dict[str, str]:
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise BloggerReleaseError("Blogger 이미지 URL mapping JSON을 읽을 수 없습니다.") from error
     if not isinstance(data, dict) or not all(isinstance(key, str) and isinstance(value, str) for key, value in data.items()):
         raise BloggerReleaseError("Blogger 이미지 URL mapping 형식이 올바르지 않습니다.")
     for name, value in data.items():
         if not name or Path(name).is_absolute() or ".." in Path(name).parts:
             raise BloggerReleaseError(f"Blogger 이미지 mapping 키가 올바르지 않습니다: {name!r}")
+        if re.search(r"[\"'\s\x00-\x1f\x7f]", value):
+            raise BloggerReleaseError(f"Blogger 이미지 URL에 따옴표·공백·제어문자를 사용할 수 없습니다: {value}")
         parsed = urlparse(value)
-        host = (parsed.hostname or "").lower()
-        if parsed.scheme != "https" or not host or host == "oneplate-ai.github.io":
+        host = (parsed.hostname or "").lower().rstrip(".")
+        if parsed.scheme != "https" or not host or parsed.username or parsed.password or host == "oneplate-ai.github.io":
             raise BloggerReleaseError(f"Blogger 이미지 URL은 Pages가 아닌 HTTPS URL이어야 합니다: {value}")
         if not (host.endswith(".googleusercontent.com") or host.endswith(".bp.blogspot.com")):
             raise BloggerReleaseError(f"Blogger 이미지 URL host가 허용되지 않습니다: {value}")
     return {f"https://oneplate-ai.github.io/assets/images/{name}": url for name, url in data.items()}
 
 
+def _image_urls(path: Path) -> dict[str, str]:
+    return _image_urls_bytes(path.read_bytes())
+
+
 def pages_image_sources(content: str) -> dict[str, str]:
-    """Return every Pages image spelling mapped to its canonical map key."""
+    """Return decoded Pages image spellings mapped to canonical map keys."""
     sources: dict[str, str] = {}
-    for match in _ARTICLE_IMAGE_URL_RE.finditer(content):
+    for match in _ARTICLE_IMAGE_URL_RE.finditer(unescape(content)):
         host = match.group("host").rstrip(".").lower()
         if host != "oneplate-ai.github.io":
             continue
@@ -212,17 +222,19 @@ def apply_image_mapping(content: str, image_urls: dict[str, str]) -> str:
 def ensure_image_mapping(content: str, image_urls: dict[str, str]) -> None:
     """Fail closed when any Pages-hosted article image lacks a Blogger URL."""
     sources = pages_image_sources(content)
+    if sources and unescape(content) != content:
+        raise BloggerReleaseError("HTML entity로 인코딩된 Pages 이미지 URL은 mapping 없이 차단합니다.")
     missing = sorted(set(sources.values()) - set(image_urls))
     if missing:
         raise BloggerReleaseError("Blogger 이미지 URL mapping이 없습니다: " + ", ".join(missing))
 
 
-def verify_image_map_approval(approval: dict[str, Any], image_url_path: Path) -> None:
-    """Require the exact image map to be cryptographically bound to this release."""
+def verify_image_map_approval(approval: dict[str, Any], image_map_bytes: bytes) -> None:
+    """Require the exact in-memory image map to be bound to this release."""
     expected = approval.get("blogger_image_map_sha256")
     if not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected):
         raise BloggerReleaseError("Blogger release 승인 기록에 blogger_image_map_sha256가 필요합니다.")
-    actual = hashlib.sha256(image_url_path.read_bytes()).hexdigest()
+    actual = hashlib.sha256(image_map_bytes).hexdigest()
     if actual != expected:
         raise BloggerReleaseError("Blogger 이미지 URL mapping SHA-256이 승인 기록과 일치하지 않습니다.")
 
@@ -239,12 +251,20 @@ def release_sources(
         raise BloggerReleaseError(f"승인 원본 검증을 통과하지 못했습니다: {error}") from error
 
     publish_date = str(approval["scheduled_publish_at"])
-    verify_image_map_approval(approval, image_url_path)
-    image_urls = _image_urls(image_url_path)
+    image_map_bytes = image_url_path.read_bytes()
+    verify_image_map_approval(approval, image_map_bytes)
+    image_urls = _image_urls_bytes(image_map_bytes)
     sources: dict[tuple[str, str], dict[str, Any]] = {}
     for draft_item in approval["drafts"]:
         draft_path = (root / str(draft_item["exact_draft_path"])).resolve()
-        draft_text = draft_path.read_text(encoding="utf-8")
+        draft_bytes = draft_path.read_bytes()
+        actual_hash = hashlib.sha256(draft_bytes).hexdigest()
+        if actual_hash != draft_item["sha256"]:
+            raise BloggerReleaseError(f"승인 초안 SHA-256이 변경되었습니다: {draft_item['exact_draft_path']}")
+        try:
+            draft_text = draft_bytes.decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise BloggerReleaseError(f"승인 초안을 UTF-8로 읽을 수 없습니다: {draft_item['exact_draft_path']}") from error
         public_text = public_copy_from_draft(draft_text)
         try:
             payload = build_blogger_payload(
@@ -455,6 +475,7 @@ class ReleaseClient:
         prepared: list[tuple[str, dict[str, Any]]] = []
         live_updates: list[tuple[str, dict[str, Any], tuple[str, str], str]] = []
         prepared_mutations: list[str] = []
+        failed_prepare: dict[str, str] | None = None
         planned_switcher_keys: set[tuple[str, str]] = set()
         switchers_after_publish = False
         release_changes: list[dict[str, Any]] = []
@@ -475,13 +496,20 @@ class ReleaseClient:
             action = change["action"]
             try:
                 if action == "create_draft_then_publish":
+                    failed_prepare = {"action": action, "language": str(source["language"])}
                     post = self.create_fresh_draft(payload)
-                    prepared.append((str(post["id"]), source))
-                    prepared_mutations.append(f"create:{source['language']}:{post['id']}")
+                    post_id = post.get("id") if isinstance(post, dict) else None
+                    if not isinstance(post_id, str) or not post_id:
+                        raise BloggerReleaseError("Blogger 새 DRAFT 응답에 유효한 id가 없습니다.")
+                    prepared.append((post_id, source))
+                    prepared_mutations.append(f"create:{source['language']}:{post_id}")
+                    failed_prepare = None
                 elif action == "update_draft_then_publish":
+                    failed_prepare = {"action": action, "id": str(change["id"]), "language": str(source["language"])}
                     self.client.update_draft(str(change["id"]), payload)
                     prepared.append((str(change["id"]), source))
                     prepared_mutations.append(f"update:{source['language']}:{change['id']}")
+                    failed_prepare = None
                 elif action == "publish_draft":
                     prepared.append((str(change["id"]), source))
                 elif action == "update_live":
@@ -491,10 +519,10 @@ class ReleaseClient:
                     live_updates.append((str(change["id"]), payload, tuple(change["key"]), navigation))
                 else:
                     raise BloggerReleaseError(f"지원하지 않는 release action: {action}")
-            except BloggerApiError as error:
+            except (BloggerApiError, BloggerReleaseError, KeyError, TypeError) as error:
                 raise BloggerReleaseError(
                     "Blogger 한·영 초안 준비가 부분 완료되었습니다. "
-                    f"prepared={prepared_mutations}, failed={source['language']}; "
+                    f"prepared={prepared_mutations}, failed={failed_prepare}; "
                     "공개 처리는 시작하지 않았으며 동일 release unit의 DRAFT 상태를 read-back 후 재시도하십시오."
                 ) from error
 
@@ -503,7 +531,8 @@ class ReleaseClient:
                 self.verify_staged_draft(post_id, source)
         except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
-                "Blogger 한·영 초안 준비 read-back이 실패했습니다. 공개 처리는 시작하지 않았습니다."
+                "Blogger 한·영 초안 준비 read-back이 실패했습니다. "
+                f"prepared={prepared_mutations}; 공개 처리는 시작하지 않았습니다."
             ) from error
 
         published_posts: list[dict[str, str]] = []
