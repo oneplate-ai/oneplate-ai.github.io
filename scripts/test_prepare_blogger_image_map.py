@@ -48,6 +48,24 @@ class PrepareBloggerImageMapTests(unittest.TestCase):
             self.assertEqual(result["required_image_keys"], ["lesson.svg"])
             self.assertFalse(output.exists())
 
+    def test_nested_asset_key_is_compatible_with_the_release_guard(self):
+        module = self._module()
+        release = importlib.import_module("blogger_release")
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            ko = self._draft(root, "ko.md", "ko", '<img src="{{ \'/assets/images/topic/lesson.svg\' | relative_url }}">\n')
+            en = self._draft(root, "en.md", "en", '<img src="{{ \'/assets/images/topic/lesson.svg\' | relative_url }}">\n')
+            output = root / "approval" / "images.json"
+            result = module.prepare_image_map(root, ko, en, output)
+            self.assertEqual(result["required_image_keys"], ["topic/lesson.svg"])
+            output.parent.mkdir(parents=True)
+            output.write_text('{"topic/lesson.svg":"https://lh3.googleusercontent.com/lesson.svg"}', encoding="utf-8")
+            self.assertEqual(module.prepare_image_map(root, ko, en, output)["status"], "ready_existing_map")
+            release.ensure_image_mapping(
+                '<img src="https://oneplate-ai.github.io/assets/images/topic/lesson.svg">',
+                release._image_urls_bytes(output.read_bytes()),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

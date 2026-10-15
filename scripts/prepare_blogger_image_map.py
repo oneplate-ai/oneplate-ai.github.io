@@ -26,8 +26,12 @@ def _image_keys(draft_path: Path) -> dict[str, str]:
     sources = pages_image_sources(str(payload["content"]))
     keys: dict[str, str] = {}
     for canonical in sources.values():
-        key = Path(urlparse(canonical).path).name
-        if not key:
+        parsed_path = urlparse(canonical).path
+        prefix = "/assets/images/"
+        if not parsed_path.startswith(prefix):
+            raise ImageMapPreparationError(f"Blogger 이미지 mapping source가 assets/images 아래가 아닙니다: {canonical}")
+        key = parsed_path.removeprefix(prefix)
+        if not key or Path(key).is_absolute() or ".." in Path(key).parts:
             raise ImageMapPreparationError(f"Blogger 이미지 mapping 키를 만들 수 없습니다: {canonical}")
         previous = keys.setdefault(key, canonical)
         if previous != canonical:
