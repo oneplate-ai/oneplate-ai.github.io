@@ -8,7 +8,7 @@ Blogger의 공개 URL, canonical, robots.txt, 글 sitemap, 고정 Page sitemap�
 
 ## 2. 전환 전에 갖춰진 항목
 
-- 58개 공개 글은 모두 Blogger 도메인으로 된 개별 한·영 counterpart switcher를 가집니다.
+- 2026-10-14 조사 당시 58개 공개 글에 개별 한·영 counterpart switcher가 있었습니다. 이는 과거 관측이며, 2026-10-15부터 표시용 nav는 제거·재생성 금지 정책으로 대체됩니다(`BLOGGER_RELEASE_CONTRACT.md` 6절).
 - API와 공개 HTML에서 Pages 도메인 참조는 확인되지 않았습니다.
 - Blogger canonical은 홈, 글, label archive에서 자기 Blogger URL을 가리킵니다.
 - Blogger robots.txt와 sitemap.xml, sitemap-pages.xml은 공개 응답합니다.
@@ -21,9 +21,9 @@ Blogger의 공개 URL, canonical, robots.txt, 글 sitemap, 고정 Page sitemap�
    - 이는 외부 Blogger theme 설정 변경이므로 별도 승인 없이는 실행하지 않습니다.
 
 2. **한·영 SEO 선언의 운영 정책**
-   - 글 본문의 reciprocal language switcher는 완료되었지만, 현재 Blogger head에는 post-level `hreflang` 선언이 없습니다.
+   - 과거 조사에서 Blogger head에는 post-level `hreflang` 선언이 없었습니다. 표시용 language switcher 제거와 언어·번역 metadata 정책은 별개이며, nav 제거로 SEO 선언이 추가되는 것은 아닙니다.
    - Blogger 템플릿은 상대 글 URL을 기본 데이터로 제공하지 않으므로, 잘못된 전역 hreflang를 삽입하지 않습니다.
-   - 전환 승인 전에 Blogger가 지원하는 안전한 per-post head metadata 방식 또는 명시적인 "언어 링크만 제공" SEO 정책을 결정해야 합니다.
+   - 전환 승인 전에 Blogger가 지원하는 안전한 per-post head metadata 방식 또는 명시적인 "post-level hreflang 미제공" SEO 정책을 결정해야 합니다.
 
 3. **Pages의 역할 확정**
    - 공식 전환 전에는 Pages를 보조/아카이브 채널로 유지합니다.

@@ -79,8 +79,8 @@ class BloggerSeriesNavigationTests(unittest.TestCase):
         self.assertEqual(pairs["ko"], ("https://blog.example/ko", "https://blog.example/en"))
         post_changes, _ = plan_changes([korean, english], [], {})
         changed = {post["id"]: content for post, content in post_changes}
-        self.assertIn('href="https://blog.example/en"', changed["ko"])
-        self.assertIn('href="https://blog.example/ko"', changed["en"])
+        self.assertNotIn('href="https://blog.example/en"', changed["ko"])
+        self.assertNotIn('href="https://blog.example/ko"', changed["en"])
         self.assertIn(NAV_START, changed["ko"])
     def test_rejects_an_unpaired_language_post(self):
         korean = {"id": "ko", "title": "한국어", "url": "https://blog.example/ko", "published": "2026-10-12T19:00:00+09:00", "labels": ["ko", "today-ai-bite"], "content": "<p>본문</p>"}

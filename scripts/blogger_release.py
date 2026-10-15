@@ -18,7 +18,7 @@ from typing import Any, Callable
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
-from blogger_adapter import build_blogger_payload, inject_language_switcher
+from blogger_adapter import build_blogger_payload, inject_language_switcher, remove_language_switcher
 from blogger_full_parity_sync import fresh_access_token, strip_navigation
 from blogger_series_navigation import NAV_PATTERN, render_series_navigation, replace_navigation
 from blogger_publish import BloggerApiError, BloggerClient, build_client_payload
@@ -34,10 +34,6 @@ class BloggerReleaseError(RuntimeError):
     """The approved Blogger release cannot be planned or verified safely."""
 
 
-_LANGUAGE_SWITCHER_RE = re.compile(
-    r"\s*<nav\b[^>]*class=[\"'][^\"']*\boneplate-language-switcher\b[^\"']*[\"'][^>]*>.*?</nav>\s*",
-    re.IGNORECASE | re.DOTALL,
-)
 _DRAFT_FRONT_MATTER_RE = re.compile(r"\A---\n(?P<front>.*?)\n---\n(?P<body>.*)\Z", re.DOTALL)
 _VERIFICATION_NOTE_RE = re.compile(
     r"(?P<open><(?:p|aside)\b[^>]*\bclass=[\"'][^\"']*\bpost-verification\b[^\"']*[\"'][^>]*>)"
@@ -55,7 +51,7 @@ _ARTICLE_IMAGE_URL_RE = re.compile(
 
 def strip_language_switcher(content: str) -> str:
     """Remove only the generated counterpart switcher from a Blogger body."""
-    return _LANGUAGE_SWITCHER_RE.sub("\n", content).strip()
+    return remove_language_switcher(content)
 
 
 def _fetch_public_html(url: str) -> str:
@@ -339,7 +335,8 @@ def plan_release(
             )
         labels_match = sorted(post.get("labels", [])) == source["labels"]
         actual_content = strip_navigation(str(post.get("content", ""))) if state == "LIVE" else str(post.get("content", ""))
-        actual_content = strip_language_switcher(actual_content)
+        if state == "LIVE":
+            actual_content = strip_language_switcher(actual_content)
         content_match = actual_content.strip() == str(source["content"]).strip()
         if state == "LIVE":
             if not labels_match or not content_match:
@@ -350,6 +347,9 @@ def plan_release(
                     "key": key,
                     "navigation": navigation.group(0) if navigation else "",
                 })
+                original_content = str(post.get("content", ""))
+                if remove_language_switcher(original_content) != original_content:
+                    changes[-1]["remove_language_switcher"] = True
         elif state == "DRAFT":
             action = "publish_draft" if labels_match and content_match else "update_draft_then_publish"
             changes.append({"action": action, "id": str(post["id"]), "key": key})
@@ -370,12 +370,24 @@ def plan_release(
                 next(source["key"] for source in sources.values() if source["language"] == update["language"])
                 for update in language_switcher_updates(sources, current)
             }
-            switcher_keys.update(tuple(change["key"]) for change in changes if change["action"] == "update_live")
+            switcher_keys.difference_update(tuple(change["key"]) for change in changes if change["action"] == "update_live")
             for key in sorted(switcher_keys):
                 post_id = str(current[key][1]["id"])
-                changes.append({"action": "update_language_switcher", "id": post_id, "key": key})
+                changes.append({"action": "remove_language_switcher", "id": post_id, "key": key})
         else:
-            changes.append({"action": "update_series_navigation_and_language_switchers_after_publish", "keys": sorted(sources)})
+            # A promotion in the other language cannot change an already-correct
+            # same-language series block. Plan only the writes needed after it.
+            navigation_keys = set(sources) - live_keys
+            for key in live_keys:
+                if series_navigation_updates({key: sources[key]}, current):
+                    navigation_keys.add(key)
+            changes.append({"action": "update_series_navigation_after_publish", "keys": sorted(navigation_keys)})
+            updated_keys = {tuple(change["key"]) for change in changes if change["action"] == "update_live"}
+            for key in sorted(live_keys - updated_keys):
+                post = current[key][1]
+                content = str(post.get("content", ""))
+                if remove_language_switcher(content) != content:
+                    changes.append({"action": "remove_language_switcher", "id": str(post["id"]), "key": key})
     return changes
 
 
@@ -383,29 +395,24 @@ def language_switcher_updates(
     sources: dict[tuple[str, str], dict[str, Any]],
     current: dict[tuple[str, str], tuple[str, dict[str, Any]]],
 ) -> list[dict[str, Any]]:
-    """Build only needed reciprocal-language switcher updates for a live pair."""
+    """Plan display-only removal of legacy managed navs for the approved LIVE pair."""
     by_language = {str(source["language"]): source for source in sources.values()}
     if set(by_language) != {"ko", "en"}:
-        raise BloggerReleaseError("언어 전환 링크에는 한·영 Blogger release 쌍이 필요합니다.")
+        raise BloggerReleaseError("표시용 언어 nav 제거에는 한·영 Blogger release 쌍이 필요합니다.")
     posts: dict[str, dict[str, Any]] = {}
     for language, source in by_language.items():
         actual = current.get(tuple(source["key"]))
         if actual is None or actual[0] != "LIVE":
-            raise BloggerReleaseError(f"언어 전환 링크 대상이 LIVE가 아닙니다: {language}")
+            raise BloggerReleaseError(f"표시용 언어 nav 제거 대상이 LIVE가 아닙니다: {language}")
         post = actual[1]
         if not isinstance(post.get("url"), str) or not post["url"]:
-            raise BloggerReleaseError(f"언어 전환 링크 대상 URL이 없습니다: {language}")
+            raise BloggerReleaseError(f"표시용 언어 nav 제거 대상 URL이 없습니다: {language}")
         posts[language] = post
 
     updates: list[dict[str, Any]] = []
     for language in ("ko", "en"):
         post = posts[language]
-        expected = inject_language_switcher(
-            str(post.get("content", "")),
-            current_lang=language,
-            ko_url=str(posts["ko"]["url"]),
-            en_url=str(posts["en"]["url"]),
-        )
+        expected = remove_language_switcher(str(post.get("content", "")))
         if expected != post.get("content"):
             updates.append({"id": str(post["id"]), "content": expected, "language": language})
     return updates
@@ -442,9 +449,9 @@ def verify_language_switchers(
     sources: dict[tuple[str, str], dict[str, Any]],
     current: dict[tuple[str, str], tuple[str, dict[str, Any]]],
 ) -> None:
-    """Require the final API read-back to contain correct reciprocal links."""
+    """Require the final API read-back to contain no managed language nav."""
     if language_switcher_updates(sources, current):
-        raise BloggerReleaseError("Blogger 언어 전환 링크 read-back 검증 실패")
+        raise BloggerReleaseError("Blogger 표시용 언어 nav 제거 read-back 검증 실패")
 
 
 class ReleaseClient:
@@ -510,31 +517,23 @@ class ReleaseClient:
         live_updates: list[tuple[str, dict[str, Any], tuple[str, str], str]] = []
         prepared_mutations: list[str] = []
         failed_prepare: dict[str, str] | None = None
-        planned_switcher_keys: set[tuple[str, str]] = set()
+        planned_switcher_targets: set[tuple[tuple[str, str], str]] = set()
         planned_navigation_keys: set[tuple[str, str]] = set()
-        switchers_after_publish = False
         navigation_after_publish = False
         release_changes: list[dict[str, Any]] = []
         for change in changes:
             action = change["action"]
-            if action == "update_language_switcher":
-                planned_switcher_keys.add(tuple(change["key"]))
+            if action == "remove_language_switcher":
+                planned_switcher_targets.add((tuple(change["key"]), str(change["id"])))
             elif action == "update_series_navigation":
                 planned_navigation_keys.add(tuple(change["key"]))
-            elif action == "update_language_switchers_after_publish":
-                switchers_after_publish = True
-                planned_switcher_keys.update(tuple(key) for key in change["keys"])
-            elif action == "update_series_navigation_and_language_switchers_after_publish":
+            elif action == "update_series_navigation_after_publish":
                 navigation_after_publish = True
-                switchers_after_publish = True
                 planned_navigation_keys.update(tuple(key) for key in change["keys"])
-                planned_switcher_keys.update(tuple(key) for key in change["keys"])
             else:
                 release_changes.append(change)
-        if switchers_after_publish and planned_switcher_keys != set(sources):
-            raise BloggerReleaseError("Blogger 언어 전환 링크 post-publish 계획이 승인 한·영 쌍과 일치하지 않습니다.")
-        if navigation_after_publish and planned_navigation_keys != set(sources):
-            raise BloggerReleaseError("Blogger 시리즈 목록 post-publish 계획이 승인 한·영 쌍과 일치하지 않습니다.")
+        if navigation_after_publish and not planned_navigation_keys <= set(sources):
+            raise BloggerReleaseError("Blogger 시리즈 목록 post-publish 계획이 승인 한·영 쌍을 벗어납니다.")
         for change in release_changes:
             source = sources[tuple(change["key"])]
             payload = {"title": source["title"], "labels": source["labels"], "content": source["content"]}
@@ -665,14 +664,14 @@ class ReleaseClient:
         failed_switcher: dict[str, Any] | None = None
         try:
             switcher_updates = language_switcher_updates(sources, current)
-            actual_switcher_keys = {
-                next(source["key"] for source in sources.values() if source["language"] == update["language"])
+            actual_switcher_targets = {
+                (next(source["key"] for source in sources.values() if source["language"] == update["language"]), str(update["id"]))
                 for update in switcher_updates
             }
-            if actual_switcher_keys != planned_switcher_keys:
+            if actual_switcher_targets != planned_switcher_targets:
                 raise BloggerReleaseError(
-                    "Blogger 언어 전환 링크 실제 변경이 계획과 일치하지 않습니다: "
-                    f"planned={sorted(planned_switcher_keys)}, actual={sorted(actual_switcher_keys)}"
+                    "Blogger 표시용 언어 nav 제거 실제 변경이 계획과 일치하지 않습니다: "
+                    f"planned={sorted(planned_switcher_targets)}, actual={sorted(actual_switcher_targets)}"
                 )
             for update in switcher_updates:
                 source = next(item for item in sources.values() if item["language"] == update["language"])
@@ -683,12 +682,12 @@ class ReleaseClient:
                     "content": update["content"],
                 })
                 if updated.get("content") != update["content"]:
-                    raise BloggerReleaseError(f"Blogger 언어 전환 링크 write read-back 실패: {update['language']}")
+                    raise BloggerReleaseError(f"Blogger 표시용 언어 nav 제거 write read-back 실패: {update['language']}")
                 completed_switchers.append(failed_switcher)
                 failed_switcher = None
         except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
-                "Blogger 언어 전환 링크 갱신이 부분 완료되었습니다. "
+                "Blogger 표시용 언어 nav 제거 갱신이 부분 완료되었습니다. "
                 f"prepared={prepared_mutations}, published={published_posts}, "
                 f"live_completed={completed_live}, navigation_completed={completed_navigation}, "
                 f"switcher_completed={completed_switchers}, failed={failed_switcher}; "
@@ -700,7 +699,7 @@ class ReleaseClient:
             verify_language_switchers(sources, final_current)
         except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
-                "Blogger 시리즈 목록 또는 언어 전환 링크 최종 read-back이 실패했습니다. "
+                "Blogger 시리즈 목록 또는 표시용 언어 nav 제거 최종 read-back이 실패했습니다. "
                 f"prepared={prepared_mutations}, published={published_posts}, "
                 f"live_completed={completed_live}, navigation_completed={completed_navigation}, "
                 f"switcher_completed={completed_switchers}; "
