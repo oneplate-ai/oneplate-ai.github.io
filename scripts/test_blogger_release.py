@@ -243,23 +243,23 @@ class BloggerReleaseTests(unittest.TestCase):
             with self.assertRaises(module.BloggerReleaseError):
                 module.verify_image_map_approval({"blogger_image_map_sha256": "0" * 64}, path.read_bytes())
 
-    def test_bilingual_switcher_writes_are_disclosed_in_the_plan(self):
+    def test_bilingual_switcher_removals_are_disclosed_in_the_plan(self):
         module = self._module()
         sources = {
             ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
             ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": '<nav class="oneplate-language-switcher">old</nav><p>본문</p>', "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": '<nav class="oneplate-language-switcher">old</nav><p>body</p>', "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         plan = module.plan_release(sources, current)
         self.assertEqual(
-            {tuple(item["key"]) for item in plan if item["action"] == "update_language_switcher"},
+            {tuple(item["key"]) for item in plan if item["action"] == "remove_language_switcher"},
             set(sources),
         )
 
-    def test_new_bilingual_posts_plan_series_navigation_and_switchers_after_publish(self):
+    def test_new_bilingual_posts_plan_only_series_navigation_after_publish(self):
         module = self._module()
         sources = {
             ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
@@ -267,7 +267,7 @@ class BloggerReleaseTests(unittest.TestCase):
         }
         plan = module.plan_release(sources, {})
         self.assertIn(
-            {"action": "update_series_navigation_and_language_switchers_after_publish", "keys": sorted(sources)},
+            {"action": "update_series_navigation_after_publish", "keys": sorted(sources)},
             plan,
         )
 
@@ -301,7 +301,7 @@ class BloggerReleaseTests(unittest.TestCase):
             set(sources),
         )
 
-    def test_apply_writes_planned_series_navigation_before_switchers(self):
+    def test_apply_writes_only_planned_series_navigation_without_switchers(self):
         module = self._module()
         sources = {
             ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
@@ -323,15 +323,15 @@ class BloggerReleaseTests(unittest.TestCase):
         release = object.__new__(module.ReleaseClient)
         release.client = FakeClient()
         release.verify = lambda _sources: current
-        changes = [{"action": "update_series_navigation_and_language_switchers_after_publish", "keys": sorted(sources)}]
+        changes = [{"action": "update_series_navigation_after_publish", "keys": sorted(sources)}]
         result = release.apply(sources, changes)
-        self.assertEqual(len(release.client.calls), 4)
+        self.assertEqual(len(release.client.calls), 2)
         self.assertEqual(len(result["navigation_completed"]), 2)
-        self.assertEqual(len(result["switcher_completed"]), 2)
+        self.assertEqual(len(result["switcher_completed"]), 0)
         self.assertTrue(all("oneplate-series-navigation" in post["content"] for _, post in current.values()))
-        self.assertTrue(all("oneplate-language-switcher" in post["content"] for _, post in current.values()))
+        self.assertTrue(all("oneplate-language-switcher" not in post["content"] for _, post in current.values()))
 
-    def test_switcher_failure_reports_completed_navigation(self):
+    def test_later_series_failure_reports_completed_navigation(self):
         module = self._module()
         sources = {
             ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
@@ -345,7 +345,7 @@ class BloggerReleaseTests(unittest.TestCase):
             def __init__(self): self.calls = 0
             def update_post(self, post_id, payload):
                 self.calls += 1
-                if self.calls == 3:
+                if self.calls == 2:
                     raise module.BloggerApiError("switcher write failed")
                 for state, post in current.values():
                     if state == "LIVE" and post["id"] == post_id:
@@ -355,14 +355,14 @@ class BloggerReleaseTests(unittest.TestCase):
         release = object.__new__(module.ReleaseClient)
         release.client = FakeClient()
         release.verify = lambda _sources: current
-        changes = [{"action": "update_series_navigation_and_language_switchers_after_publish", "keys": sorted(sources)}]
+        changes = [{"action": "update_series_navigation_after_publish", "keys": sorted(sources)}]
         with self.assertRaises(module.BloggerReleaseError) as caught:
             release.apply(sources, changes)
         self.assertIn("navigation_completed", str(caught.exception))
         self.assertIn("ko-id", str(caught.exception))
         self.assertIn("en-id", str(caught.exception))
 
-    def test_live_body_update_also_plans_that_post_switcher_repair(self):
+    def test_live_body_update_does_not_plan_redundant_switcher_write(self):
         module = self._module()
         sources = {
             ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>approved ko</p>"},
@@ -375,8 +375,8 @@ class BloggerReleaseTests(unittest.TestCase):
         }
         plan = module.plan_release(sources, current)
         self.assertIn({"action": "update_live", "id": "ko-id", "key": ("한국어 제목", "ko"), "navigation": ""}, plan)
-        self.assertIn({"action": "update_language_switcher", "id": "ko-id", "key": ("한국어 제목", "ko")}, plan)
-        self.assertNotIn({"action": "update_language_switcher", "id": "en-id", "key": ("English title", "en")}, plan)
+        self.assertNotIn({"action": "remove_language_switcher", "id": "ko-id", "key": ("한국어 제목", "ko")}, plan)
+        self.assertNotIn({"action": "remove_language_switcher", "id": "en-id", "key": ("English title", "en")}, plan)
 
     def test_post_publish_readback_failure_reports_published_ids(self):
         module = self._module()
@@ -498,7 +498,7 @@ class BloggerReleaseTests(unittest.TestCase):
             [],
         )
 
-    def test_language_switcher_update_preserves_series_navigation(self):
+    def test_language_switcher_removal_preserves_series_navigation(self):
         module = self._module()
         sources = {
             ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "language": "ko", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
@@ -506,12 +506,12 @@ class BloggerReleaseTests(unittest.TestCase):
         }
         navigation = "<!-- oneplate-series-navigation:start --><section>navigation</section><!-- oneplate-series-navigation:end -->"
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "url": "https://blog.example/ko", "content": navigation + "<p>본문</p>"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "url": "https://blog.example/en", "content": navigation + "<p>body</p>"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "url": "https://blog.example/ko", "content": '<nav class="oneplate-language-switcher">old</nav>' + navigation + "<p>본문</p>"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "url": "https://blog.example/en", "content": '<nav class="oneplate-language-switcher">old</nav>' + navigation + "<p>body</p>"}),
         }
         updates = module.language_switcher_updates(sources, current)
         self.assertEqual(len(updates), 2)
-        self.assertIn('href="https://blog.example/en"', updates[0]["content"])
+        self.assertNotIn("oneplate-language-switcher", updates[0]["content"])
         self.assertIn(navigation, updates[0]["content"])
 
     def test_cross_series_title_collision_is_rejected_not_overwritten(self):

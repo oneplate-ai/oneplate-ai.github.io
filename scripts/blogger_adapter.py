@@ -8,7 +8,7 @@ query parameters.
 from __future__ import annotations
 
 import re
-from html import escape
+from html.parser import HTMLParser
 from urllib.parse import urljoin
 
 
@@ -55,6 +55,58 @@ def _remove_repeated_leading_title(body: str, title: str) -> str:
     return pattern.sub(lambda match: match.group("kicker") or "", body, count=1)
 
 
+def remove_language_switcher(content: str) -> str:
+    """Pure cleanup for LIVE posts or copied Page bodies; preserve all other bytes.
+
+    Match an exact HTML class token on real nav elements (not prose, comments,
+    script text, or similar class names). Reject an unclosed managed nav rather
+    than guessing where approved article content ends. No HTML serialization.
+    """
+    class NavSpans(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__(convert_charrefs=False)
+            self.lines = [0]
+            self.lines.extend(match.end() for match in re.finditer("\n", content))
+            self.depth = 0
+            self.start: int | None = None
+            self.spans: list[tuple[int, int]] = []
+
+        def source_offset(self) -> int:
+            line, column = self.getpos()
+            return self.lines[line - 1] + column
+
+        def handle_starttag(self, tag, attrs):
+            if tag != "nav":
+                return
+            if self.start is not None:
+                self.depth += 1
+            elif any(name == "class" and "oneplate-language-switcher" in (value or "").split()
+                     for name, value in attrs):
+                self.start = self.source_offset()
+                self.depth = 1
+
+        def handle_endtag(self, tag):
+            if tag == "nav" and self.start is not None:
+                self.depth -= 1
+                if self.depth == 0:
+                    end = content.index(">", self.source_offset()) + 1
+                    self.spans.append((self.start, end))
+                    self.start = None
+
+        def handle_startendtag(self, tag, attrs):
+            self.handle_starttag(tag, attrs)
+            self.handle_endtag(tag)
+
+    parser = NavSpans()
+    parser.feed(content)
+    parser.close()
+    if parser.start is not None:
+        raise ValueError("Unclosed managed oneplate-language-switcher nav; cleanup refused")
+    for start, end in reversed(parser.spans):
+        content = content[:start] + content[end:]
+    return content
+
+
 def inject_language_switcher(
     content: str,
     *,
@@ -62,24 +114,12 @@ def inject_language_switcher(
     ko_url: str,
     en_url: str,
 ) -> str:
-    """Prepend a safe per-post Korean/English counterpart switcher."""
-    marker = "oneplate-language-switcher"
-    content = re.sub(
-        rf"\s*<nav\b[^>]*class=[\"'][^\"']*\b{marker}\b[^\"']*[\"'][^>]*>.*?</nav>\s*",
-        "\n",
-        content,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    ko_current = ' aria-current="page"' if current_lang == "ko" else ""
-    en_current = ' aria-current="page"' if current_lang == "en" else ""
-    switcher = (
-        f'<nav class="{marker}" aria-label="언어 선택">'
-        f'<a href="{escape(ko_url, quote=True)}"{ko_current}>한국어</a>'
-        '<span aria-hidden="true"> · </span>'
-        f'<a href="{escape(en_url, quote=True)}"{en_current}>English</a>'
-        '</nav>\n'
-    )
-    return switcher + content.lstrip()
+    """Deprecated compatibility alias: remove managed visible links, never add.
+
+    URL/language arguments remain accepted for older callers; identity metadata
+    is independent of this display-only cleanup.
+    """
+    return remove_language_switcher(content)
 
 
 def build_blogger_payload(
@@ -100,7 +140,7 @@ def build_blogger_payload(
     if lang not in {"ko", "en"}:
         raise ValueError("front matter의 lang은 ko 또는 en이어야 합니다.")
 
-    content = _resolve_relative_urls(body, public_base_url)
+    content = remove_language_switcher(_resolve_relative_urls(body, public_base_url))
     content = _remove_repeated_leading_title(content, title)
     return {
         "title": title,

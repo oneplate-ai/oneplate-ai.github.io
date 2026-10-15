@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synchronize Blogger series navigation, counterpart language links, and restored Page image URLs.
+"""Synchronize Blogger series navigation, legacy language-nav removal, and restored Page image URLs.
 
 Default mode is read-only.  Pass --apply only after reviewing the exact plan.
 """
@@ -15,7 +15,7 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from blogger_adapter import inject_language_switcher
+from blogger_adapter import remove_language_switcher
 
 BLOGGER_API = "https://www.googleapis.com/blogger/v3"
 DEFAULT_BLOG_ID = "4141805834166693370"
@@ -204,20 +204,13 @@ def image_url_map(urls_path: Path) -> dict[str, str]:
 
 def plan_changes(posts: list[dict[str, Any]], pages: list[dict[str, Any]], image_urls: dict[str, str]) -> tuple[list[tuple[dict[str, Any], str]], list[tuple[dict[str, Any], str]]]:
     post_changes: list[tuple[dict[str, Any], str]] = []
-    counterparts = language_pair_urls(posts)
+    language_pair_urls(posts)  # Retain existing identity/pair validation.
     for post in posts:
         if not post.get("published"):
             continue
         language_and_series(post)
         expected = replace_navigation(str(post.get("content", "")), render_series_navigation(post, posts))
-        ko_url, en_url = counterparts[str(post["id"])]
-        language, _ = language_and_series(post)
-        expected = inject_language_switcher(
-            expected,
-            current_lang=language,
-            ko_url=ko_url,
-            en_url=en_url,
-        )
+        expected = remove_language_switcher(expected)
         if expected != post.get("content"):
             post_changes.append((post, expected))
     page_changes: list[tuple[dict[str, Any], str]] = []
@@ -260,8 +253,7 @@ def main(argv: list[str] | None = None) -> int:
         switcher_changes = [
             {"id": post["id"], "title": post["title"]}
             for post, expected in post_changes
-            if "oneplate-language-switcher" not in str(post.get("content", ""))
-            and "oneplate-language-switcher" in expected
+            if remove_language_switcher(str(post.get("content", ""))) != str(post.get("content", ""))
         ]
         navigation_changes = [
             {"id": post["id"], "title": post["title"]}

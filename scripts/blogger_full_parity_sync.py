@@ -16,7 +16,7 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from blogger_adapter import build_blogger_payload
+from blogger_adapter import build_blogger_payload, remove_language_switcher
 from blogger_series_navigation import NAV_PATTERN
 
 BLOGGER_API = "https://www.googleapis.com/blogger/v3"
@@ -182,9 +182,23 @@ def plan(sources: dict[tuple[str, str], dict[str, Any]], current: dict[tuple[str
         state, post = actual
         if sorted(post.get("labels", [])) != source["labels"]:
             raise ParityError(f"Blogger label 불일치: {key}")
-        compare_actual = strip_navigation(str(post.get("content", ""))) if state == "LIVE" else str(post.get("content", "")).strip()
-        content_change = compare_actual != str(source["content"]).strip()
+        original = str(post.get("content", ""))
+        cleaned = remove_language_switcher(original)
+        compare_actual = strip_navigation(cleaned) if state == "LIVE" else cleaned.strip()
+        source_content = remove_language_switcher(str(source["content"]))
+        body_change = compare_actual != source_content.strip()
+        content_change = body_change or cleaned != original
+        expected_content = cleaned
+        if body_change:
+            expected_content = source_content
+            # Preserve the managed series block when approved source prose changes.
+            navigation = NAV_PATTERN.search(original) if state == "LIVE" else None
+            if navigation:
+                expected_content = expected_content.rstrip() + "\n\n" + navigation.group(0) + "\n"
         state_change = state != target_state(source)
+        if state_change and target_state(source) == "DRAFT":
+            # Reverts retain the existing source-only draft contract.
+            expected_content = source_content
         if content_change or state_change:
             changes.append({
                 "key": key,
@@ -193,6 +207,8 @@ def plan(sources: dict[tuple[str, str], dict[str, Any]], current: dict[tuple[str
                 "from_state": state,
                 "to_state": target_state(source),
                 "content_change": content_change,
+                "remove_language_switcher": cleaned != original,
+                "content": expected_content,
                 "source_path": source["path"],
             })
     return changes
@@ -226,14 +242,14 @@ def main(argv: list[str] | None = None) -> int:
             desired_state = target_state(source)
             if old_state == "DRAFT" and desired_state == "LIVE":
                 if change["content_change"]:
-                    client.update(post, "DRAFT", source["content"])
+                    client.update(post, "DRAFT", change["content"])
                 client.publish(str(post["id"]), source["publish_date"])
             elif old_state == "LIVE" and desired_state == "DRAFT":
                 client.revert(str(post["id"]))
                 refreshed = index_posts(client.list_posts("DRAFT"), "DRAFT")[key]
-                client.update(refreshed, "DRAFT", source["content"])
+                client.update(refreshed, "DRAFT", change["content"])
             elif change["content_change"]:
-                client.update(post, desired_state, source["content"])
+                client.update(post, desired_state, change["content"])
         # Exact source verification occurs before the separate navigation renderer re-adds its marked block.
         live, drafts = client.list_posts("LIVE"), client.list_posts("DRAFT")
         final = {(key): ("LIVE", post) for key, post in index_posts(live, "LIVE").items()}

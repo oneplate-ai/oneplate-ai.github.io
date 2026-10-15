@@ -62,26 +62,9 @@ class BloggerAdapterTests(unittest.TestCase):
         self.assertIn('<p class="post-kicker">이번 주 AI 한 접시</p>', payload["content"])
         self.assertIn('<p class="summary">요약입니다.</p>', payload["content"])
 
-    def test_injects_language_switcher_without_duplicate_marker(self):
-        content = '<p class="post-kicker">오늘 AI 한입</p><p>본문입니다.</p>'
-        updated = inject_language_switcher(
-            content,
-            current_lang="ko",
-            ko_url="https://oneplate-ai.blogspot.com/ko.html",
-            en_url="https://oneplate-ai.blogspot.com/en.html",
-        )
-        self.assertEqual(updated.count("oneplate-language-switcher"), 1)
-        self.assertIn('href="https://oneplate-ai.blogspot.com/en.html"', updated)
-        self.assertIn("aria-current=\"page\">한국어", updated)
-        self.assertEqual(
-            inject_language_switcher(
-                updated,
-                current_lang="ko",
-                ko_url="https://oneplate-ai.blogspot.com/ko.html",
-                en_url="https://oneplate-ai.blogspot.com/en.html",
-            ).count("oneplate-language-switcher"),
-            1,
-        )
+    def test_legacy_injection_is_marker_free_noop(self):
+        content = ' \n<p>본문입니다.</p>\n '
+        self.assertEqual(inject_language_switcher(content, current_lang="ko", ko_url="ko", en_url="en"), content)
 
 
 if __name__ == "__main__":
