@@ -514,6 +514,18 @@ class BloggerReleaseTests(unittest.TestCase):
         self.assertNotIn("oneplate-language-switcher", updates[0]["content"])
         self.assertIn(navigation, updates[0]["content"])
 
+    def test_current_scope_ignores_unrelated_noncombined_drafts(self):
+        module = self._module()
+        allowed = {("Approved", "ko")}
+        posts = [
+            {"id": "staging", "title": "[staging]", "labels": ["ko", "media-staging"]},
+            {"id": "old-draft", "title": "Older article", "labels": ["easy-ai", "ko"]},
+            {"id": "collision", "title": "Approved", "labels": ["weekly-ai-ko"]},
+        ]
+        indexed = module.index_posts(posts, "DRAFT", allowed_keys=allowed)
+        self.assertEqual(set(indexed), allowed)
+        self.assertEqual(indexed[("Approved", "ko")][1]["id"], "collision")
+
     def test_cross_series_title_collision_is_rejected_not_overwritten(self):
         module = self._module()
         source = {"key": ("Shared title", "ko"), "title": "Shared title", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>approved</p>"}

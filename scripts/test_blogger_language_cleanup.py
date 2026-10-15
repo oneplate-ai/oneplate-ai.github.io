@@ -34,7 +34,7 @@ class LanguageCleanupTests(unittest.TestCase):
                 current[(post_id, post_id)][1].update(payload)
                 return current[(post_id, post_id)][1]
         runner = module.ReleaseClient(Client())
-        runner.current = lambda: current
+        runner.current = lambda *_: current
         result = runner.apply(sources, plan)
         self.assertEqual(calls, ['ko', 'en'])
         self.assertEqual(len(result['switcher_completed']), 2)
@@ -56,7 +56,7 @@ class LanguageCleanupTests(unittest.TestCase):
                 post.update(payload)
                 return post
         runner = module.ReleaseClient(Client())
-        runner.current = lambda: current
+        runner.current = lambda *_: current
         with self.assertRaises(module.BloggerReleaseError):
             runner.apply(sources, plan)
         self.assertEqual(writes, [])
@@ -71,7 +71,7 @@ class LanguageCleanupTests(unittest.TestCase):
                 current[(post_id, post_id)][1].update(payload)
                 return current[(post_id, post_id)][1]
         runner = module.ReleaseClient(Client())
-        runner.current = lambda: current
+        runner.current = lambda *_: current
         with self.assertRaisesRegex(module.BloggerReleaseError, "switcher_completed=.*ko.*failed=.*en"):
             runner.apply(sources, module.plan_release(sources, current))
 
@@ -135,7 +135,7 @@ class LanguageCleanupTests(unittest.TestCase):
                 current[(post_id, post_id)][1].update(payload)
                 return current[(post_id, post_id)][1]
         runner = module.ReleaseClient(Client())
-        runner.current = lambda: current
+        runner.current = lambda *_: current
         runner.verify_staged_draft = lambda *_: None
         runner.apply(sources, module.plan_release(sources, current))
         self.assertEqual(module.plan_release(sources, current), [])
