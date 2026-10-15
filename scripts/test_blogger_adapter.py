@@ -37,7 +37,7 @@ class BloggerAdapterTests(unittest.TestCase):
         )
 
         self.assertEqual(payload["title"], "AI를 쉽게 이해하는 글")
-        self.assertEqual(payload["labels"], ["easy-ai", "ko"])
+        self.assertEqual(payload["labels"], ["easy-ai-ko"])
         self.assertTrue(payload["is_draft"])
         self.assertIn("<p>본문입니다.</p>", payload["content"])
         self.assertIn(

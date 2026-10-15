@@ -27,7 +27,7 @@ class FakeOpener:
             "id": "new-id",
             "title": "새 글",
             "status": "DRAFT",
-            "labels": ["weekly-ai", "ko"],
+            "labels": ["weekly-ai-ko"],
         }
         self.calls = []
 
@@ -48,7 +48,7 @@ class FakeOpener:
                 "id": "existing-id",
                 "title": "새 글",
                 "status": "DRAFT",
-                "labels": ["weekly-ai", "ko"],
+                "labels": ["weekly-ai-ko"],
                 "content": "<p>갱신 본문</p>",
             })
         if request.method == "POST":
@@ -61,13 +61,13 @@ class BloggerPublishTests(unittest.TestCase):
         payload = {
             "title": "새 글",
             "content": "<p>본문</p>",
-            "labels": ["weekly-ai", "ko"],
+            "labels": ["weekly-ai-ko"],
             "is_draft": True,
             "source_permalink": "/posts/example.html",
         }
         self.assertEqual(
             build_client_payload(payload),
-            {"title": "새 글", "content": "<p>본문</p>", "labels": ["weekly-ai", "ko"]},
+            {"title": "새 글", "content": "<p>본문</p>", "labels": ["weekly-ai-ko"]},
         )
 
     def test_create_uses_draft_endpoint_and_reads_back(self):
@@ -75,13 +75,13 @@ class BloggerPublishTests(unittest.TestCase):
             "id": "new-id",
             "title": "새 글",
             "status": "DRAFT",
-            "labels": ["weekly-ai", "ko"],
+            "labels": ["weekly-ai-ko"],
         })
         client = BloggerClient("token", "blog-id", opener=opener)
         post = client.create_draft({
             "title": "새 글",
             "content": "<p>본문</p>",
-            "labels": ["weekly-ai", "ko"],
+            "labels": ["weekly-ai-ko"],
             "is_draft": True,
         })
         self.assertEqual(post["status"], "DRAFT")
@@ -99,7 +99,7 @@ class BloggerPublishTests(unittest.TestCase):
         post = client.create_draft({
             "title": "새 글",
             "content": "<p>본문</p>",
-            "labels": ["weekly-ai", "ko"],
+            "labels": ["weekly-ai-ko"],
             "is_draft": True,
         })
         self.assertEqual(post["id"], "existing-id")
@@ -115,7 +115,7 @@ class BloggerPublishTests(unittest.TestCase):
         post = client.update_draft("existing-id", {
             "title": "새 글",
             "content": "<p>갱신 본문</p>",
-            "labels": ["weekly-ai", "ko"],
+            "labels": ["weekly-ai-ko"],
             "is_draft": True,
         })
         self.assertEqual(post["id"], "existing-id")
@@ -135,7 +135,7 @@ class BloggerPublishTests(unittest.TestCase):
         post = client.update_post("existing-id", {
             "title": "새 글",
             "content": "<nav>언어</nav><p>본문</p>",
-            "labels": ["weekly-ai", "ko"],
+            "labels": ["weekly-ai-ko"],
         })
         self.assertEqual(post["status"], "DRAFT")
         self.assertEqual(opener.calls[-1].method, "PUT")

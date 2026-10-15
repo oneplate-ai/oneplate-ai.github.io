@@ -15,7 +15,7 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from blogger_adapter import remove_language_switcher
+from blogger_adapter import label_identity, remove_language_switcher
 
 BLOGGER_API = "https://www.googleapis.com/blogger/v3"
 DEFAULT_BLOG_ID = "4141805834166693370"
@@ -43,12 +43,13 @@ class BloggerApiError(RuntimeError):
 
 
 def language_and_series(post: dict[str, Any]) -> tuple[str, str]:
-    labels = set(post.get("labels", []))
-    languages = labels & LANGUAGES
-    series = labels & SERIES
-    if len(languages) != 1 or len(series) != 1:
-        raise ValueError(f"글의 언어/시리즈 label이 하나여야 합니다: {post.get('id')}")
-    return next(iter(languages)), next(iter(series))
+    identity = label_identity(post.get("labels", []))
+    if identity is None:
+        raise ValueError(f"글의 결합 series-language label이 하나여야 합니다: {post.get('id')}")
+    series, language = identity
+    if series not in SERIES:
+        raise ValueError(f"지원하지 않는 series label입니다: {post.get('id')}")
+    return language, series
 
 
 def render_series_navigation(post: dict[str, Any], posts: list[dict[str, Any]]) -> str:

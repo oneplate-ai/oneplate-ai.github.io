@@ -122,6 +122,29 @@ def inject_language_switcher(
     return remove_language_switcher(content)
 
 
+def combined_label(series: str, lang: str) -> str:
+    """Return the one public Blogger label that identifies series and language."""
+    if not series or not re.fullmatch(r"[a-z0-9-]+", series):
+        raise ValueError("안전한 series slug가 필요합니다.")
+    if lang not in {"ko", "en"}:
+        raise ValueError("lang은 ko 또는 en이어야 합니다.")
+    return f"{series}-{lang}"
+
+
+def label_identity(labels: object) -> tuple[str, str] | None:
+    """Read the series/language identity from exactly one combined public label."""
+    if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels):
+        return None
+    identities: list[tuple[str, str]] = []
+    for label in labels:
+        match = re.fullmatch(r"([a-z0-9-]+)-(ko|en)", label)
+        if match:
+            identities.append((match.group(1), match.group(2)))
+    if len(identities) != 1:
+        return None
+    return identities[0]
+
+
 def build_blogger_payload(
     jekyll_post: str,
     *,
@@ -145,7 +168,7 @@ def build_blogger_payload(
     return {
         "title": title,
         "content": content,
-        "labels": [series, lang],
+        "labels": [combined_label(series, lang)],
         "is_draft": bool(draft),
         "source_permalink": metadata.get("permalink", ""),
     }
