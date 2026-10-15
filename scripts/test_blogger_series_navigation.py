@@ -21,28 +21,28 @@ class BloggerSeriesNavigationTests(unittest.TestCase):
                 "title": "새 글",
                 "url": "https://example.test/newer",
                 "published": "2026-10-12T00:00:00+09:00",
-                "labels": ["ko", "today-ai-bite"],
+                "labels": ["today-ai-bite-ko"],
             },
             {
                 "id": "older",
                 "title": "이전 글",
                 "url": "https://example.test/older",
                 "published": "2026-10-09T00:00:00+09:00",
-                "labels": ["ko", "today-ai-bite"],
+                "labels": ["today-ai-bite-ko"],
             },
             {
                 "id": "english",
                 "title": "English post",
                 "url": "https://example.test/english",
                 "published": "2026-10-12T00:00:00+09:00",
-                "labels": ["en", "today-ai-bite"],
+                "labels": ["today-ai-bite-en"],
             },
         ]
 
     def test_identifies_one_language_and_one_series(self):
         self.assertEqual(language_and_series(self.posts[0]), ("ko", "today-ai-bite"))
         with self.assertRaises(ValueError):
-            language_and_series({"labels": ["ko", "en", "today-ai-bite"]})
+            language_and_series({"labels": ["today-ai-bite-ko", "easy-ai-ko"]})
 
     def test_renders_only_the_same_language_series_and_marks_current(self):
         markup = render_series_navigation(self.posts[0], self.posts)
@@ -73,8 +73,8 @@ class BloggerSeriesNavigationTests(unittest.TestCase):
         self.assertIn(f'href="{old}"', updated)
 
     def test_pairs_same_series_and_publish_instant_for_counterpart_switchers(self):
-        korean = {"id": "ko", "title": "한국어", "url": "https://blog.example/ko", "published": "2026-10-12T19:00:00+09:00", "labels": ["ko", "today-ai-bite"], "content": "<p>본문</p>"}
-        english = {"id": "en", "title": "English", "url": "https://blog.example/en", "published": "2026-10-12T19:00:00+09:00", "labels": ["en", "today-ai-bite"], "content": "<p>body</p>"}
+        korean = {"id": "ko", "title": "한국어", "url": "https://blog.example/ko", "published": "2026-10-12T19:00:00+09:00", "labels": ["today-ai-bite-ko"], "content": "<p>본문</p>"}
+        english = {"id": "en", "title": "English", "url": "https://blog.example/en", "published": "2026-10-12T19:00:00+09:00", "labels": ["today-ai-bite-en"], "content": "<p>body</p>"}
         pairs = language_pair_urls([korean, english])
         self.assertEqual(pairs["ko"], ("https://blog.example/ko", "https://blog.example/en"))
         post_changes, _ = plan_changes([korean, english], [], {})
@@ -83,7 +83,7 @@ class BloggerSeriesNavigationTests(unittest.TestCase):
         self.assertNotIn('href="https://blog.example/ko"', changed["en"])
         self.assertIn(NAV_START, changed["ko"])
     def test_rejects_an_unpaired_language_post(self):
-        korean = {"id": "ko", "title": "한국어", "url": "https://blog.example/ko", "published": "2026-10-12T19:00:00+09:00", "labels": ["ko", "today-ai-bite"], "content": "<p>본문</p>"}
+        korean = {"id": "ko", "title": "한국어", "url": "https://blog.example/ko", "published": "2026-10-12T19:00:00+09:00", "labels": ["today-ai-bite-ko"], "content": "<p>본문</p>"}
         with self.assertRaisesRegex(ValueError, "불완전"):
             language_pair_urls([korean])
 

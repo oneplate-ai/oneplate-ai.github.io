@@ -21,7 +21,7 @@ class BloggerReleaseTests(unittest.TestCase):
             "key": ("2026년 10월 15일", "ko"),
             "title": "2026년 10월 15일",
             "language": "ko",
-            "labels": ["ko", "today-ai-bite"],
+            "labels": ["today-ai-bite-ko"],
             "content": "<p>approved body</p>",
             "publish_date": "2026-10-15T19:00:00+09:00",
         }
@@ -33,13 +33,13 @@ class BloggerReleaseTests(unittest.TestCase):
             [{"action": "update_draft_then_publish", "id": "draft-1", "key": source["key"]}],
         )
 
-    def test_identical_live_post_is_a_noop_and_will_not_be_duplicated(self):
+    def test_identical_live_post_with_combined_label_is_a_noop_and_will_not_be_duplicated(self):
         module = self._module()
         source = {
             "key": ("AI basics", "en"),
             "title": "AI basics",
             "language": "en",
-            "labels": ["easy-ai", "en"],
+            "labels": ["easy-ai-en"],
             "content": "<p>approved body</p>",
             "publish_date": "2026-10-15T19:00:00+09:00",
         }
@@ -54,7 +54,7 @@ class BloggerReleaseTests(unittest.TestCase):
             "key": ("AI basics", "en"),
             "title": "AI basics",
             "language": "en",
-            "labels": ["easy-ai", "en"],
+            "labels": ["easy-ai-en"],
             "content": "<p>approved body</p>",
             "publish_date": "2026-10-15T19:00:00+09:00",
         }
@@ -80,7 +80,7 @@ class BloggerReleaseTests(unittest.TestCase):
             "key": ("AI basics", "en"),
             "title": "AI basics",
             "language": "en",
-            "labels": ["easy-ai", "en"],
+            "labels": ["easy-ai-en"],
             "content": "<p>approved body</p>",
             "publish_date": "2026-10-15T19:00:00+09:00",
         }
@@ -94,7 +94,7 @@ class BloggerReleaseTests(unittest.TestCase):
 
     def test_live_update_preserves_existing_series_navigation(self):
         module = self._module()
-        source = {"key": ("AI basics", "en"), "title": "AI basics", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>approved</p>"}
+        source = {"key": ("AI basics", "en"), "title": "AI basics", "language": "en", "labels": ["easy-ai-en"], "content": "<p>approved</p>"}
         navigation = "<!-- oneplate-series-navigation:start --><section>navigation</section><!-- oneplate-series-navigation:end -->"
         current = {source["key"]: ("LIVE", {"id": "live-1", "title": source["title"], "labels": source["labels"], "content": "<p>old</p>" + navigation})}
         plan = module.plan_release({source["key"]: source}, current)
@@ -106,7 +106,7 @@ class BloggerReleaseTests(unittest.TestCase):
             "key": ("AI basics", "en"),
             "title": "AI basics",
             "language": "en",
-            "labels": ["easy-ai", "en"],
+            "labels": ["easy-ai-en"],
             "content": "<p>approved body</p>",
             "publish_date": "2026-10-15T19:00:00+09:00",
         }
@@ -184,7 +184,7 @@ class BloggerReleaseTests(unittest.TestCase):
             sources = module.release_sources(root, approval_path, image_map)
 
         self.assertEqual(set(sources), {("승인된 제목", "ko"), ("Approved title", "en")})
-        self.assertEqual(sources[("승인된 제목", "ko")]["labels"], ["easy-ai", "ko"])
+        self.assertEqual(sources[("승인된 제목", "ko")]["labels"], ["easy-ai-ko"])
         self.assertIn("<p>승인된 제목</p>", sources[("승인된 제목", "ko")]["content"])
         self.assertEqual(sources[("승인된 제목", "ko")]["source_path"], "drafts/approved-ko.md")
 
@@ -246,12 +246,12 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_bilingual_switcher_removals_are_disclosed_in_the_plan(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": '<nav class="oneplate-language-switcher">old</nav><p>본문</p>', "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": '<nav class="oneplate-language-switcher">old</nav><p>body</p>', "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": '<nav class="oneplate-language-switcher">old</nav><p>본문</p>', "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai-en"], "content": '<nav class="oneplate-language-switcher">old</nav><p>body</p>', "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         plan = module.plan_release(sources, current)
         self.assertEqual(
@@ -262,8 +262,8 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_new_bilingual_posts_plan_only_series_navigation_after_publish(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>"},
         }
         plan = module.plan_release(sources, {})
         self.assertIn(
@@ -274,12 +274,12 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_series_navigation_updates_render_new_live_pair(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai-en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         updates = module.series_navigation_updates(sources, current)
         self.assertEqual({update["id"] for update in updates}, {"ko-id", "en-id"})
@@ -288,12 +288,12 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_live_bilingual_pair_missing_navigation_is_disclosed_in_plan(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai-en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         plan = module.plan_release(sources, current)
         self.assertEqual(
@@ -304,12 +304,12 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_apply_writes_only_planned_series_navigation_without_switchers(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai-en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         class FakeClient:
             def __init__(self): self.calls = []
@@ -334,12 +334,12 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_later_series_failure_reports_completed_navigation(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai-en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         class FakeClient:
             def __init__(self): self.calls = 0
@@ -365,13 +365,13 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_live_body_update_does_not_plan_redundant_switcher_write(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>approved ko</p>"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>approved en</p>"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>approved ko</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>approved en</p>"},
         }
         en_switcher = module.inject_language_switcher("<p>approved en</p>", current_lang="en", ko_url="https://blog.example/ko", en_url="https://blog.example/en")
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>old ko</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": en_switcher, "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": "<p>old ko</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai-en"], "content": en_switcher, "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         plan = module.plan_release(sources, current)
         self.assertIn({"action": "update_live", "id": "ko-id", "key": ("한국어 제목", "ko"), "navigation": ""}, plan)
@@ -381,8 +381,8 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_post_publish_readback_failure_reports_published_ids(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
         }
         class FakeClient:
             def __init__(self): self.published = []
@@ -401,7 +401,7 @@ class BloggerReleaseTests(unittest.TestCase):
 
     def test_staged_draft_readback_failure_reports_prepared_ids(self):
         module = self._module()
-        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
+        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
         release = object.__new__(module.ReleaseClient)
         release.client = object()
         release.verify_staged_draft = lambda *_args: (_ for _ in ()).throw(module.BloggerReleaseError("staged read-back failed"))
@@ -414,7 +414,7 @@ class BloggerReleaseTests(unittest.TestCase):
 
     def test_create_draft_response_without_id_reports_failed_action(self):
         module = self._module()
-        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
+        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
         release = object.__new__(module.ReleaseClient)
         release.create_fresh_draft = lambda _payload: {}
         changes = [{"action": "create_draft_then_publish", "key": source["key"]}]
@@ -423,7 +423,7 @@ class BloggerReleaseTests(unittest.TestCase):
 
     def test_publish_failure_reports_attempted_draft_id(self):
         module = self._module()
-        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
+        source = {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"}
         class FakeClient:
             def publish_draft(self, _post_id, _when): raise module.BloggerApiError("ambiguous publish failure")
         release = object.__new__(module.ReleaseClient)
@@ -436,8 +436,8 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_live_update_failure_reports_already_published_counterpart(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
         }
         class FakeClient:
             def __init__(self): self.published = []
@@ -457,12 +457,12 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_apply_rejects_unplanned_switcher_write_before_api_mutation(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
-            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
         }
         current = {
-            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
-            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
+            ("한국어 제목", "ko"): ("LIVE", {"id": "ko-id", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/ko"}),
+            ("English title", "en"): ("LIVE", {"id": "en-id", "title": "English title", "labels": ["easy-ai-en"], "content": "<p>body</p>", "published": "2026-10-14T10:00:00Z", "url": "https://blog.example/en"}),
         }
         class FakeClient:
             def __init__(self): self.calls = []
@@ -501,8 +501,8 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_language_switcher_removal_preserves_series_navigation(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "language": "ko", "title": "한국어 제목", "labels": ["easy-ai", "ko"], "content": "<p>본문</p>"},
-            ("English title", "en"): {"key": ("English title", "en"), "language": "en", "title": "English title", "labels": ["easy-ai", "en"], "content": "<p>body</p>"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "language": "ko", "title": "한국어 제목", "labels": ["easy-ai-ko"], "content": "<p>본문</p>"},
+            ("English title", "en"): {"key": ("English title", "en"), "language": "en", "title": "English title", "labels": ["easy-ai-en"], "content": "<p>body</p>"},
         }
         navigation = "<!-- oneplate-series-navigation:start --><section>navigation</section><!-- oneplate-series-navigation:end -->"
         current = {
@@ -516,15 +516,15 @@ class BloggerReleaseTests(unittest.TestCase):
 
     def test_cross_series_title_collision_is_rejected_not_overwritten(self):
         module = self._module()
-        source = {"key": ("Shared title", "ko"), "title": "Shared title", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>approved</p>"}
-        current = {source["key"]: ("LIVE", {"id": "other-series", "title": "Shared title", "labels": ["weekly-ai", "ko"], "content": "<p>other</p>"})}
+        source = {"key": ("Shared title", "ko"), "title": "Shared title", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>approved</p>"}
+        current = {source["key"]: ("LIVE", {"id": "other-series", "title": "Shared title", "labels": ["weekly-ai-ko"], "content": "<p>other</p>"})}
         with self.assertRaises(module.BloggerReleaseError):
             module.plan_release({source["key"]: source}, current)
 
     def test_scheduled_title_collision_blocks_release(self):
         module = self._module()
-        source = {"key": ("Shared title", "ko"), "title": "Shared title", "language": "ko", "labels": ["easy-ai", "ko"], "content": "<p>approved</p>"}
-        current = {source["key"]: ("SCHEDULED", {"id": "scheduled", "title": "Shared title", "labels": ["easy-ai", "ko"], "content": "<p>old</p>"})}
+        source = {"key": ("Shared title", "ko"), "title": "Shared title", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>approved</p>"}
+        current = {source["key"]: ("SCHEDULED", {"id": "scheduled", "title": "Shared title", "labels": ["easy-ai-ko"], "content": "<p>old</p>"})}
         with self.assertRaises(module.BloggerReleaseError):
             module.plan_release({source["key"]: source}, current)
 

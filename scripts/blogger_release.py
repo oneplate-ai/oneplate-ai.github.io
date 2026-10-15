@@ -18,7 +18,7 @@ from typing import Any, Callable
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
-from blogger_adapter import build_blogger_payload, inject_language_switcher, remove_language_switcher
+from blogger_adapter import build_blogger_payload, inject_language_switcher, label_identity, remove_language_switcher
 from blogger_full_parity_sync import fresh_access_token, strip_navigation
 from blogger_series_navigation import NAV_PATTERN, render_series_navigation, replace_navigation
 from blogger_publish import BloggerApiError, BloggerClient, build_client_payload
@@ -156,13 +156,11 @@ def public_copy_from_draft(text: str) -> str:
 
 
 def _language(payload: dict[str, object], path: Path) -> str:
-    labels = payload.get("labels", [])
-    if not isinstance(labels, list):
-        raise BloggerReleaseError(f"Blogger label을 읽을 수 없습니다: {path}")
-    languages = [value for value in labels if value in {"ko", "en"}]
-    if len(languages) != 1:
-        raise BloggerReleaseError(f"Blogger 언어 label은 ko 또는 en 하나여야 합니다: {path}")
-    return languages[0]
+    identity = label_identity(payload.get("labels", []))
+    if identity is None:
+        raise BloggerReleaseError(f"Blogger 결합 label이 올바르지 않습니다: {path}")
+    _, language = identity
+    return language
 
 
 def _image_urls_bytes(raw: bytes) -> dict[str, str]:
@@ -303,11 +301,11 @@ def release_sources(
 def index_posts(posts: list[dict[str, Any]], state: str) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
     indexed: dict[tuple[str, str], tuple[str, dict[str, Any]]] = {}
     for post in posts:
-        labels = post.get("labels", [])
-        languages = [label for label in labels if label in {"ko", "en"}]
-        if len(languages) != 1:
-            raise BloggerReleaseError(f"Blogger 글의 언어 label이 올바르지 않습니다: {post.get('id')}")
-        key = (str(post.get("title", "")), languages[0])
+        identity = label_identity(post.get("labels", []))
+        if identity is None:
+            raise BloggerReleaseError(f"Blogger 글의 결합 label이 올바르지 않습니다: {post.get('id')}")
+        _, language = identity
+        key = (str(post.get("title", "")), language)
         if key in indexed:
             raise BloggerReleaseError(f"Blogger 글 title/language가 중복됩니다: {key}")
         indexed[key] = (state, post)
@@ -326,12 +324,12 @@ def plan_release(
             changes.append({"action": "create_draft_then_publish", "key": key})
             continue
         state, post = existing
-        source_series = set(source["labels"]) - {"ko", "en"}
-        existing_series = set(post.get("labels", [])) - {"ko", "en"}
-        if source_series != existing_series:
+        source_identity = label_identity(source["labels"])
+        existing_identity = label_identity(post.get("labels", []))
+        if source_identity is None or existing_identity is None or source_identity != existing_identity:
             raise BloggerReleaseError(
                 f"Blogger title/language 충돌: 다른 series 글을 덮어쓸 수 없습니다: {key} "
-                f"(expected={sorted(source_series)}, actual={sorted(existing_series)})"
+                f"(expected={source_identity}, actual={existing_identity})"
             )
         labels_match = sorted(post.get("labels", [])) == source["labels"]
         actual_content = strip_navigation(str(post.get("content", ""))) if state == "LIVE" else str(post.get("content", ""))

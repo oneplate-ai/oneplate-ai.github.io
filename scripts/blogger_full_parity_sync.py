@@ -16,7 +16,7 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from blogger_adapter import build_blogger_payload, remove_language_switcher
+from blogger_adapter import build_blogger_payload, label_identity, remove_language_switcher
 from blogger_series_navigation import NAV_PATTERN
 
 BLOGGER_API = "https://www.googleapis.com/blogger/v3"
@@ -144,10 +144,11 @@ def source_records(root: Path, image_urls: dict[str, str]) -> tuple[dict[tuple[s
                 skipped.append(str(path.relative_to(root)))
                 continue
             labels = sorted(payload.get("labels", []))
-            language = next((label for label in labels if label in {"ko", "en"}), None)
+            identity = label_identity(labels)
             date = re.search(r"^date:\s*(\d{4}-\d{2}-\d{2})\s*$", source, re.M)
-            if language is None or date is None:
+            if identity is None or date is None:
                 raise ParityError(f"원본 메타데이터 부족: {path}")
+            _, language = identity
             records.append({
                 "key": (str(payload["title"]), language),
                 "path": str(path.relative_to(root)),
@@ -163,9 +164,10 @@ def index_posts(posts: list[dict[str, Any]], state: str) -> dict[tuple[str, str]
     indexed: dict[tuple[str, str], dict[str, Any]] = {}
     for post in posts:
         labels = sorted(post.get("labels", []))
-        language = next((label for label in labels if label in {"ko", "en"}), None)
-        if language is None:
-            raise ParityError(f"Blogger 글의 언어 label 누락: {post.get('id')}")
+        identity = label_identity(labels)
+        if identity is None:
+            raise ParityError(f"Blogger 글의 결합 label 누락: {post.get('id')}")
+        _, language = identity
         key = (str(post["title"]), language)
         if key in indexed:
             raise ParityError(f"Blogger 글 title/language 중복: {key}")
@@ -180,8 +182,7 @@ def plan(sources: dict[tuple[str, str], dict[str, Any]], current: dict[tuple[str
         if actual is None:
             raise ParityError(f"Blogger 대응 글 누락: {key}")
         state, post = actual
-        if sorted(post.get("labels", [])) != source["labels"]:
-            raise ParityError(f"Blogger label 불일치: {key}")
+        label_change = sorted(post.get("labels", [])) != source["labels"]
         original = str(post.get("content", ""))
         cleaned = remove_language_switcher(original)
         compare_actual = strip_navigation(cleaned) if state == "LIVE" else cleaned.strip()
@@ -199,7 +200,7 @@ def plan(sources: dict[tuple[str, str], dict[str, Any]], current: dict[tuple[str
         if state_change and target_state(source) == "DRAFT":
             # Reverts retain the existing source-only draft contract.
             expected_content = source_content
-        if content_change or state_change:
+        if content_change or state_change or label_change:
             changes.append({
                 "key": key,
                 "id": str(post["id"]),
@@ -207,6 +208,7 @@ def plan(sources: dict[tuple[str, str], dict[str, Any]], current: dict[tuple[str
                 "from_state": state,
                 "to_state": target_state(source),
                 "content_change": content_change,
+                "label_change": label_change,
                 "remove_language_switcher": cleaned != original,
                 "content": expected_content,
                 "source_path": source["path"],
@@ -241,14 +243,14 @@ def main(argv: list[str] | None = None) -> int:
             old_state, post = current[key]
             desired_state = target_state(source)
             if old_state == "DRAFT" and desired_state == "LIVE":
-                if change["content_change"]:
+                if change["content_change"] or change["label_change"]:
                     client.update(post, "DRAFT", change["content"])
                 client.publish(str(post["id"]), source["publish_date"])
             elif old_state == "LIVE" and desired_state == "DRAFT":
                 client.revert(str(post["id"]))
                 refreshed = index_posts(client.list_posts("DRAFT"), "DRAFT")[key]
                 client.update(refreshed, "DRAFT", change["content"])
-            elif change["content_change"]:
+            elif change["content_change"] or change["label_change"]:
                 client.update(post, desired_state, change["content"])
         # Exact source verification occurs before the separate navigation renderer re-adds its marked block.
         live, drafts = client.list_posts("LIVE"), client.list_posts("DRAFT")

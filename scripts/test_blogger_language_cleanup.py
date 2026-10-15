@@ -9,7 +9,7 @@ class LanguageCleanupTests(unittest.TestCase):
         sources, current = {}, {}
         for lang in ('ko', 'en'):
             key = (lang, lang)
-            source = dict(key=key, title=lang, language=lang, labels=['easy-ai', lang],
+            source = dict(key=key, title=lang, language=lang, labels=[f'easy-ai-{lang}'],
                           content=' \n<p>approved ' + lang + '</p>\n ', publish_date='2000-01-01T00:00:00Z')
             sources[key] = source
             post = dict(id=lang, title=lang, labels=source['labels'], url='https://example.test/' + lang,
@@ -24,7 +24,7 @@ class LanguageCleanupTests(unittest.TestCase):
         import blogger_release as module
         sources, current = self.live_pair()
         originals = {key: dict(post) for key, (_, post) in current.items()}
-        current[('unrelated', 'ko')] = ('LIVE', dict(originals[('ko', 'ko')], id='unrelated', title='unrelated', labels=['ko', 'weekly-ai']))
+        current[('unrelated', 'ko')] = ('LIVE', dict(originals[('ko', 'ko')], id='unrelated', title='unrelated', labels=['weekly-ai-ko']))
         plan = module.plan_release(sources, current)
         self.assertEqual(plan, [dict(action='remove_language_switcher', id=lang, key=(lang, lang)) for lang in ('en', 'ko')])
         calls = []
@@ -148,7 +148,7 @@ class LanguageCleanupTests(unittest.TestCase):
                 '<nav class=oneplate-language-switcher>한국어 · English</nav>\n<p>keep</p>')
         payload = build_blogger_payload(text, public_base_url="https://example.test")
         self.assertNotIn('<nav', payload['content'])
-        self.assertEqual(payload['labels'], ['easy-ai', 'ko'])
+        self.assertEqual(payload['labels'], ['easy-ai-ko'])
         self.assertEqual(payload['source_permalink'], '/keep')
         self.assertIn('translation_key: keep', text)
 
