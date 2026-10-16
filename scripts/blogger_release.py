@@ -298,14 +298,29 @@ def release_sources(
     return sources
 
 
-def index_posts(posts: list[dict[str, Any]], state: str) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
+def index_posts(
+    posts: list[dict[str, Any]],
+    state: str,
+    *,
+    allowed_keys: set[tuple[str, str]] | None = None,
+) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
+    """Index all posts, or only the approved release keys when scoped.
+
+    A scoped release must ignore unrelated drafts such as private media staging.
+    It still includes a matching title/language key so plan_release can reject a
+    cross-series collision rather than overwriting it.
+    """
     indexed: dict[tuple[str, str], tuple[str, dict[str, Any]]] = {}
     for post in posts:
         identity = label_identity(post.get("labels", []))
         if identity is None:
+            if allowed_keys is not None:
+                continue
             raise BloggerReleaseError(f"Blogger 글의 결합 label이 올바르지 않습니다: {post.get('id')}")
         _, language = identity
         key = (str(post.get("title", "")), language)
+        if allowed_keys is not None and key not in allowed_keys:
+            continue
         if key in indexed:
             raise BloggerReleaseError(f"Blogger 글 title/language가 중복됩니다: {key}")
         indexed[key] = (state, post)
@@ -495,10 +510,13 @@ class ReleaseClient:
                 str(post.get("content", "")).strip() != str(source["content"]).strip()):
             raise BloggerReleaseError(f"Blogger staged draft read-back 실패: {post_id}")
 
-    def current(self) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
-        current = index_posts(self.list_posts("LIVE"), "LIVE")
-        drafts = index_posts(self.list_posts("DRAFT"), "DRAFT")
-        scheduled = index_posts(self.list_posts("SCHEDULED"), "SCHEDULED")
+    def current(
+        self,
+        allowed_keys: set[tuple[str, str]] | None = None,
+    ) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
+        current = index_posts(self.list_posts("LIVE"), "LIVE", allowed_keys=allowed_keys)
+        drafts = index_posts(self.list_posts("DRAFT"), "DRAFT", allowed_keys=allowed_keys)
+        scheduled = index_posts(self.list_posts("SCHEDULED"), "SCHEDULED", allowed_keys=allowed_keys)
         overlap = (set(current) & set(drafts)) | (set(current) & set(scheduled)) | (set(drafts) & set(scheduled))
         if overlap:
             raise BloggerReleaseError(f"Blogger LIVE/DRAFT/SCHEDULED key가 동시에 존재합니다: {sorted(overlap)}")
@@ -712,7 +730,7 @@ class ReleaseClient:
         }
 
     def verify(self, sources: dict[tuple[str, str], dict[str, Any]]) -> dict[tuple[str, str], tuple[str, dict[str, Any]]]:
-        current = self.current()
+        current = self.current(set(sources))
         for key, source in sources.items():
             actual = current.get(key)
             if actual is None:
@@ -756,7 +774,7 @@ def main(argv: list[str] | None = None) -> int:
         sources = release_sources(root, args.approval, args.image_urls)
         token = fresh_access_token(args.token_path, args.client_secret_path)
         release = ReleaseClient(BloggerClient(token, args.blog_id))
-        changes = plan_release(sources, release.current())
+        changes = plan_release(sources, release.current(set(sources)))
         result: dict[str, Any] = {
             "mode": "apply" if args.apply else "plan",
             "sources": len(sources),
