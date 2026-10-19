@@ -36,7 +36,7 @@ class BloggerReleaseError(RuntimeError):
 
 _DRAFT_FRONT_MATTER_RE = re.compile(r"\A---\n(?P<front>.*?)\n---\n(?P<body>.*)\Z", re.DOTALL)
 _VERIFICATION_NOTE_RE = re.compile(
-    r"(?P<open><(?:p|aside)\b[^>]*\bclass=[\"'][^\"']*\bpost-verification\b[^\"']*[\"'][^>]*>)"
+    r"(?P<open><(?:p|aside)\b[^>]*\bclass=[\"'](?P<classes>[^\"']*)[\"'][^>]*>)"
     r"(?P<body>.*?)"
     r"(?P<close></(?:p|aside)>)",
     re.IGNORECASE | re.DOTALL,
@@ -148,6 +148,8 @@ def public_copy_from_draft(text: str) -> str:
             front_lines.append(line)
 
     def replace_verification_note(note: re.Match[str]) -> str:
+        if not {'post-verification', 'verification-note'} & set(note.group('classes').split()):
+            return note.group(0)
         body = note.group("body").replace("이 초안은", "이번 게시글은").replace("This draft", "This post")
         return note.group("open") + body + note.group("close")
 

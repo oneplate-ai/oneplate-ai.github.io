@@ -21,6 +21,7 @@ def main() -> int:
     parser.add_argument("--approved-at", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--blogger-image-map", type=Path, required=True, help="승인할 Blogger 이미지 URL mapping JSON")
+    parser.add_argument("--weekly-evidence", type=Path, help="Preview에서 검토한 LIVE 일간 집합 JSON; 새 주간 승인 필수")
     args = parser.parse_args()
     root = args.root.resolve()
     paths = [("ko", args.ko.resolve()), ("en", args.en.resolve())]
@@ -67,6 +68,14 @@ def main() -> int:
             "blogger_image_map_sha256": sha256(image_map),
             "drafts": drafts,
         }
+        if series_value == 'weekly-ai':
+            if args.weekly_evidence is None:
+                raise ValueError('weekly_evidence_unbound: --weekly-evidence가 필요합니다.')
+            from weekly_source_evidence import validate_evidence
+            evidence = json.loads(args.weekly_evidence.read_bytes())
+            record['weekly_evidence'] = validate_evidence(date_value, evidence)
+        elif args.weekly_evidence is not None:
+            raise ValueError('weekly evidence는 weekly-ai 승인에만 사용할 수 있습니다.')
         output = args.output.resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
