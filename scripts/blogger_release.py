@@ -373,36 +373,12 @@ def plan_release(
 
     if {str(source["language"]) for source in sources.values()} == {"ko", "en"}:
         live_keys = {key for key, actual in current.items() if key in sources and actual[0] == "LIVE"}
-        if live_keys == set(sources):
-            navigation_keys = {
-                next(source["key"] for source in sources.values() if source["language"] == update["language"])
-                for update in series_navigation_updates(sources, current)
-            }
-            for key in sorted(navigation_keys):
-                post_id = str(current[key][1]["id"])
-                changes.append({"action": "update_series_navigation", "id": post_id, "key": key})
-            switcher_keys = {
-                next(source["key"] for source in sources.values() if source["language"] == update["language"])
-                for update in language_switcher_updates(sources, current)
-            }
-            switcher_keys.difference_update(tuple(change["key"]) for change in changes if change["action"] == "update_live")
-            for key in sorted(switcher_keys):
-                post_id = str(current[key][1]["id"])
-                changes.append({"action": "remove_language_switcher", "id": post_id, "key": key})
-        else:
-            # A promotion in the other language cannot change an already-correct
-            # same-language series block. Plan only the writes needed after it.
-            navigation_keys = set(sources) - live_keys
-            for key in live_keys:
-                if series_navigation_updates({key: sources[key]}, current):
-                    navigation_keys.add(key)
-            changes.append({"action": "update_series_navigation_after_publish", "keys": sorted(navigation_keys)})
-            updated_keys = {tuple(change["key"]) for change in changes if change["action"] == "update_live"}
-            for key in sorted(live_keys - updated_keys):
-                post = current[key][1]
-                content = str(post.get("content", ""))
-                if remove_language_switcher(content) != content:
-                    changes.append({"action": "remove_language_switcher", "id": str(post["id"]), "key": key})
+        updated_keys = {tuple(change["key"]) for change in changes if change["action"] == "update_live"}
+        for key in sorted(live_keys - updated_keys):
+            post = current[key][1]
+            content = str(post.get("content", ""))
+            if remove_language_switcher(content) != content:
+                changes.append({"action": "remove_language_switcher", "id": str(post["id"]), "key": key})
     return changes
 
 
@@ -432,32 +408,6 @@ def language_switcher_updates(
             updates.append({"id": str(post["id"]), "content": expected, "language": language})
     return updates
 
-
-def series_navigation_updates(
-    sources: dict[tuple[str, str], dict[str, Any]],
-    current: dict[tuple[str, str], tuple[str, dict[str, Any]]],
-) -> list[dict[str, Any]]:
-    """Build only needed same-language series-navigation updates for a live pair."""
-    live_posts = [post for state, post in current.values() if state == "LIVE"]
-    updates: list[dict[str, Any]] = []
-    for key, source in sorted(sources.items()):
-        actual = current.get(key)
-        if actual is None or actual[0] != "LIVE":
-            raise BloggerReleaseError(f"시리즈 목록 대상이 LIVE가 아닙니다: {key}")
-        post = actual[1]
-        expected = replace_navigation(str(post.get("content", "")), render_series_navigation(post, live_posts))
-        if expected != post.get("content"):
-            updates.append({"id": str(post["id"]), "content": expected, "language": str(source["language"])})
-    return updates
-
-
-def verify_series_navigation(
-    sources: dict[tuple[str, str], dict[str, Any]],
-    current: dict[tuple[str, str], tuple[str, dict[str, Any]]],
-) -> None:
-    """Require the final API read-back to contain current same-series navigation."""
-    if series_navigation_updates(sources, current):
-        raise BloggerReleaseError("Blogger 시리즈 목록 read-back 검증 실패")
 
 
 def verify_language_switchers(
@@ -536,22 +486,13 @@ class ReleaseClient:
         prepared_mutations: list[str] = []
         failed_prepare: dict[str, str] | None = None
         planned_switcher_targets: set[tuple[tuple[str, str], str]] = set()
-        planned_navigation_keys: set[tuple[str, str]] = set()
-        navigation_after_publish = False
         release_changes: list[dict[str, Any]] = []
         for change in changes:
             action = change["action"]
             if action == "remove_language_switcher":
                 planned_switcher_targets.add((tuple(change["key"]), str(change["id"])))
-            elif action == "update_series_navigation":
-                planned_navigation_keys.add(tuple(change["key"]))
-            elif action == "update_series_navigation_after_publish":
-                navigation_after_publish = True
-                planned_navigation_keys.update(tuple(key) for key in change["keys"])
             else:
                 release_changes.append(change)
-        if navigation_after_publish and not planned_navigation_keys <= set(sources):
-            raise BloggerReleaseError("Blogger 시리즈 목록 post-publish 계획이 승인 한·영 쌍을 벗어납니다.")
         for change in release_changes:
             source = sources[tuple(change["key"])]
             payload = {"title": source["title"], "labels": source["labels"], "content": source["content"]}
@@ -614,7 +555,6 @@ class ReleaseClient:
                     "승인 원본은 그대로 보존하고 실패한 언어만 동일 release unit으로 재시도하십시오."
                 ) from error
         completed_live: list[dict[str, Any]] = []
-        navigation_expectations = {key: navigation for _, _, key, navigation in live_updates if navigation}
         failed_live: dict[str, Any] | None = None
         try:
             for post_id, payload, key, _ in live_updates:
@@ -632,50 +572,10 @@ class ReleaseClient:
 
         try:
             current = self.verify(sources)
-            for key, expected_navigation in navigation_expectations.items():
-                actual = current.get(key)
-                if actual is None:
-                    raise BloggerReleaseError(f"Blogger 시리즈 목록 read-back 대상을 찾지 못했습니다: {key}")
-                navigation = NAV_PATTERN.search(str(actual[1].get("content", "")))
-                if navigation is None or navigation.group(0) != expected_navigation:
-                    raise BloggerReleaseError(f"Blogger 시리즈 목록 보존 read-back 실패: {key}")
         except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
                 "Blogger 공개 후 read-back이 실패했습니다. "
                 f"prepared={prepared_mutations}, published={published_posts}, live_completed={completed_live}; "
-                "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
-            ) from error
-        completed_navigation: list[dict[str, Any]] = []
-        failed_navigation: dict[str, Any] | None = None
-        try:
-            navigation_updates = series_navigation_updates(sources, current)
-            actual_navigation_keys = {
-                next(source["key"] for source in sources.values() if source["language"] == update["language"])
-                for update in navigation_updates
-            }
-            if actual_navigation_keys != planned_navigation_keys:
-                raise BloggerReleaseError(
-                    "Blogger 시리즈 목록 실제 변경이 계획과 일치하지 않습니다: "
-                    f"planned={sorted(planned_navigation_keys)}, actual={sorted(actual_navigation_keys)}"
-                )
-            for update in navigation_updates:
-                source = next(item for item in sources.values() if item["language"] == update["language"])
-                failed_navigation = {"id": update["id"], "language": update["language"]}
-                updated = self.client.update_post(str(update["id"]), {
-                    "title": source["title"],
-                    "labels": source["labels"],
-                    "content": update["content"],
-                })
-                if updated.get("content") != update["content"]:
-                    raise BloggerReleaseError(f"Blogger 시리즈 목록 write read-back 실패: {update['language']}")
-                completed_navigation.append(failed_navigation)
-                failed_navigation = None
-            current = self.verify(sources)
-        except (BloggerApiError, BloggerReleaseError) as error:
-            raise BloggerReleaseError(
-                "Blogger 시리즈 목록 갱신이 부분 완료되었습니다. "
-                f"prepared={prepared_mutations}, published={published_posts}, "
-                f"live_completed={completed_live}, navigation_completed={completed_navigation}, failed={failed_navigation}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
         completed_switchers: list[dict[str, Any]] = []
@@ -707,19 +607,18 @@ class ReleaseClient:
             raise BloggerReleaseError(
                 "Blogger 표시용 언어 nav 제거 갱신이 부분 완료되었습니다. "
                 f"prepared={prepared_mutations}, published={published_posts}, "
-                f"live_completed={completed_live}, navigation_completed={completed_navigation}, "
+                f"live_completed={completed_live}, "
                 f"switcher_completed={completed_switchers}, failed={failed_switcher}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
         try:
             final_current = self.verify(sources)
-            verify_series_navigation(sources, final_current)
             verify_language_switchers(sources, final_current)
         except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
-                "Blogger 시리즈 목록 또는 표시용 언어 nav 제거 최종 read-back이 실패했습니다. "
+                "Blogger 표시용 언어 nav 제거 최종 read-back이 실패했습니다. "
                 f"prepared={prepared_mutations}, published={published_posts}, "
-                f"live_completed={completed_live}, navigation_completed={completed_navigation}, "
+                f"live_completed={completed_live}, "
                 f"switcher_completed={completed_switchers}; "
                 "승인 원본은 그대로 보존하고 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
             ) from error
@@ -727,7 +626,6 @@ class ReleaseClient:
             "prepared": prepared_mutations,
             "published": published_posts,
             "live_completed": completed_live,
-            "navigation_completed": completed_navigation,
             "switcher_completed": completed_switchers,
         }
 

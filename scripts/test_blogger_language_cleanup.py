@@ -122,7 +122,7 @@ class LanguageCleanupTests(unittest.TestCase):
         actions = {tuple(change['key']): change['action'] for change in module.plan_release(sources, current) if 'key' in change}
         self.assertEqual(set(actions.values()), {'update_draft_then_publish'})
 
-    def test_mixed_pair_apply_reuses_correct_live_series_and_cleans_legacy_nav(self):
+    def test_mixed_pair_apply_publishes_draft_without_readding_series_navigation(self):
         import blogger_release as module
         sources, current = self.live_pair()
         current[('en', 'en')] = ('DRAFT', dict(current[('en', 'en')][1], content=sources[('en', 'en')]['content']))
@@ -139,7 +139,8 @@ class LanguageCleanupTests(unittest.TestCase):
         runner.verify_staged_draft = lambda *_: None
         runner.apply(sources, module.plan_release(sources, current))
         self.assertEqual(module.plan_release(sources, current), [])
-        self.assertEqual(calls, ['en', 'ko'])
+        self.assertEqual(calls, ['ko'])
+        self.assertNotIn('oneplate-series-navigation', current[('en', 'en')][1]['content'])
 
     def test_old_source_marker_is_removed_without_metadata_change(self):
         from blogger_adapter import build_blogger_payload
