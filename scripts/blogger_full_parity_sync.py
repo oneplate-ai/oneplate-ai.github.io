@@ -16,7 +16,13 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from blogger_adapter import build_blogger_payload, label_identity, remove_language_switcher
+from blogger_adapter import (
+    build_blogger_payload,
+    format_blogger_publication_content,
+    label_identity,
+    remove_language_switcher,
+    content_structure_signature,
+)
 from blogger_series_navigation import NAV_PATTERN
 
 BLOGGER_API = "https://www.googleapis.com/blogger/v3"
@@ -149,12 +155,14 @@ def source_records(root: Path, image_urls: dict[str, str]) -> tuple[dict[tuple[s
             if identity is None or date is None:
                 raise ParityError(f"원본 메타데이터 부족: {path}")
             _, language = identity
+            unformatted_content = apply_blogger_image_urls(str(payload["content"]), image_urls)
             records.append({
                 "key": (str(payload["title"]), language),
                 "path": str(path.relative_to(root)),
                 "state": state,
                 "labels": labels,
-                "content": apply_blogger_image_urls(str(payload["content"]), image_urls),
+                "content": format_blogger_publication_content(unformatted_content),
+                "unformatted_content": unformatted_content,
                 "publish_date": date.group(1) + "T12:00:00+09:00",
             })
     return canonical_sources(records), skipped
@@ -187,7 +195,17 @@ def plan(sources: dict[tuple[str, str], dict[str, Any]], current: dict[tuple[str
         cleaned = remove_language_switcher(original)
         compare_actual = strip_navigation(cleaned) if state == "LIVE" else cleaned.strip()
         source_content = remove_language_switcher(str(source["content"]))
-        body_change = compare_actual != source_content.strip()
+        if state == "LIVE":
+            actual_signature = content_structure_signature(compare_actual.strip())
+            equivalent_contents = [source_content]
+            unformatted_content = source.get("unformatted_content")
+            if isinstance(unformatted_content, str):
+                equivalent_contents.append(remove_language_switcher(unformatted_content))
+            body_change = actual_signature not in {
+                content_structure_signature(content.strip()) for content in equivalent_contents
+            }
+        else:
+            body_change = compare_actual != source_content.strip()
         content_change = body_change or cleaned != original
         expected_content = cleaned
         if body_change:
@@ -263,7 +281,19 @@ def main(argv: list[str] | None = None) -> int:
             if state != target_state(source) or sorted(post.get("labels", [])) != source["labels"]:
                 raise ParityError(f"상태/label read-back 실패: {key}")
             actual = strip_navigation(str(post.get("content", ""))) if state == "LIVE" else str(post.get("content", "")).strip()
-            if actual != str(source["content"]).strip():
+            source_content = remove_language_switcher(str(source["content"]))
+            if state == "LIVE":
+                actual_signature = content_structure_signature(remove_language_switcher(actual).strip())
+                equivalent_contents = [source_content]
+                unformatted_content = source.get("unformatted_content")
+                if isinstance(unformatted_content, str):
+                    equivalent_contents.append(remove_language_switcher(unformatted_content))
+                content_matches = actual_signature in {
+                    content_structure_signature(content.strip()) for content in equivalent_contents
+                }
+            else:
+                content_matches = actual == source_content.strip()
+            if not content_matches:
                 raise ParityError(f"본문 read-back 실패: {key}")
         print(json.dumps({"applied": len(changes), "live": len(live), "draft": len(drafts), "source_content_readback": "ok"}, ensure_ascii=False))
         return 0

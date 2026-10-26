@@ -18,7 +18,14 @@ from typing import Any, Callable
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
-from blogger_adapter import build_blogger_payload, inject_language_switcher, label_identity, remove_language_switcher
+from blogger_adapter import (
+    build_blogger_payload,
+    content_structure_signature,
+    format_blogger_publication_content,
+    inject_language_switcher,
+    label_identity,
+    remove_language_switcher,
+)
 from blogger_full_parity_sync import fresh_access_token, strip_navigation
 from blogger_series_navigation import NAV_PATTERN, render_series_navigation, replace_navigation
 from blogger_publish import BloggerApiError, BloggerClient, build_client_payload
@@ -52,6 +59,21 @@ _ARTICLE_IMAGE_URL_RE = re.compile(
 def strip_language_switcher(content: str) -> str:
     """Remove only the generated counterpart switcher from a Blogger body."""
     return remove_language_switcher(content)
+
+
+def live_content_matches_source(content: str, source: dict[str, Any]) -> bool:
+    """Accept exact live HTML or the approved Blogger-only presentation variant."""
+    expected = str(source["content"])
+    if content.strip() == expected.strip():
+        return True
+    unformatted = source.get("unformatted_content")
+    if not isinstance(unformatted, str):
+        return False
+    actual_signature = content_structure_signature(content)
+    return actual_signature in {
+        content_structure_signature(expected),
+        content_structure_signature(unformatted),
+    }
 
 
 def _fetch_public_html(url: str) -> str:
@@ -277,9 +299,10 @@ def release_sources(
         if language != draft_item["lang"] or payload.get("title") != draft_item["title"]:
             raise BloggerReleaseError(f"승인 기록과 초안 payload가 일치하지 않습니다: {draft_item['exact_draft_path']}")
         ensure_image_mapping(str(payload["content"]), image_urls)
-        content = apply_image_mapping(str(payload["content"]), image_urls)
-        if pages_image_sources(content):
+        unformatted_content = apply_image_mapping(str(payload["content"]), image_urls)
+        if pages_image_sources(unformatted_content):
             raise BloggerReleaseError(f"Blogger payload에 Pages 이미지 URL이 남았습니다: {draft_item['exact_draft_path']}")
+        content = format_blogger_publication_content(unformatted_content)
         key = (str(payload["title"]), language)
         if key in sources:
             raise BloggerReleaseError(f"Blogger title/language key가 중복됩니다: {key}")
@@ -292,6 +315,7 @@ def release_sources(
             "language": language,
             "labels": sorted(labels),
             "content": content,
+            "unformatted_content": unformatted_content,
             "publish_date": publish_date,
             "source_path": str(draft_item["exact_draft_path"]),
         }
@@ -352,16 +376,23 @@ def plan_release(
         actual_content = strip_navigation(str(post.get("content", ""))) if state == "LIVE" else str(post.get("content", ""))
         if state == "LIVE":
             actual_content = strip_language_switcher(actual_content)
-        content_match = actual_content.strip() == str(source["content"]).strip()
+        content_match = (
+            live_content_matches_source(actual_content, source)
+            if state == "LIVE"
+            else actual_content.strip() == str(source["content"]).strip()
+        )
         if state == "LIVE":
             if not labels_match or not content_match:
                 navigation = NAV_PATTERN.search(str(post.get("content", "")))
-                changes.append({
+                planned_change = {
                     "action": "update_live",
                     "id": str(post["id"]),
                     "key": key,
                     "navigation": navigation.group(0) if navigation else "",
-                })
+                }
+                if content_match:
+                    planned_change["preserve_content"] = True
+                changes.append(planned_change)
                 original_content = str(post.get("content", ""))
                 if remove_language_switcher(original_content) != original_content:
                     changes[-1]["remove_language_switcher"] = True
@@ -482,16 +513,19 @@ class ReleaseClient:
             raise BloggerReleaseError("Blogger release 한·영 publish_date가 서로 다릅니다.")
         require_immediate_publish_time(next(iter(publish_times)))
         prepared: list[tuple[str, dict[str, Any]]] = []
-        live_updates: list[tuple[str, dict[str, Any], tuple[str, str], str]] = []
+        live_updates: list[tuple[str, dict[str, Any], tuple[str, str], str, bool]] = []
         prepared_mutations: list[str] = []
         failed_prepare: dict[str, str] | None = None
         planned_switcher_targets: set[tuple[tuple[str, str], str]] = set()
         release_changes: list[dict[str, Any]] = []
         for change in changes:
             action = change["action"]
+            key = tuple(change["key"])
             if action == "remove_language_switcher":
-                planned_switcher_targets.add((tuple(change["key"]), str(change["id"])))
-            else:
+                planned_switcher_targets.add((key, str(change["id"])))
+            elif action == "update_live" and change.get("preserve_content") and change.get("remove_language_switcher"):
+                planned_switcher_targets.add((key, str(change["id"])))
+            if action != "remove_language_switcher":
                 release_changes.append(change)
         for change in release_changes:
             source = sources[tuple(change["key"])]
@@ -516,10 +550,15 @@ class ReleaseClient:
                 elif action == "publish_draft":
                     prepared.append((str(change["id"]), source))
                 elif action == "update_live":
+                    preserve_content = bool(change.get("preserve_content"))
                     navigation = str(change.get("navigation", ""))
-                    if navigation:
-                        payload["content"] = str(payload["content"]).rstrip() + "\n\n" + navigation + "\n"
-                    live_updates.append((str(change["id"]), payload, tuple(change["key"]), navigation))
+                    if not preserve_content:
+                        unformatted = source.get("unformatted_content")
+                        if isinstance(unformatted, str):
+                            payload["content"] = unformatted
+                        if navigation:
+                            payload["content"] = str(payload["content"]).rstrip() + "\n\n" + navigation + "\n"
+                    live_updates.append((str(change["id"]), payload, tuple(change["key"]), navigation, preserve_content))
                 else:
                     raise BloggerReleaseError(f"지원하지 않는 release action: {action}")
             except (BloggerApiError, BloggerReleaseError, KeyError, TypeError) as error:
@@ -557,12 +596,27 @@ class ReleaseClient:
         completed_live: list[dict[str, Any]] = []
         failed_live: dict[str, Any] | None = None
         try:
-            for post_id, payload, key, _ in live_updates:
+            for post_id, payload, key, _, preserve_content in live_updates:
                 failed_live = {"id": post_id, "key": key, "language": sources[key]["language"]}
+                if preserve_content:
+                    latest = self.current({key}).get(key)
+                    if latest is None or latest[0] != "LIVE" or str(latest[1].get("id")) != post_id:
+                        raise BloggerReleaseError(f"Blogger LIVE 대상이 계획 후 변경되어 본문 보존 갱신을 중단했습니다: {key}")
+                    latest_content = latest[1].get("content")
+                    if not isinstance(latest_content, str):
+                        raise BloggerReleaseError(f"Blogger LIVE 본문을 다시 읽을 수 없어 갱신을 중단했습니다: {key}")
+                    comparable_content = strip_language_switcher(strip_navigation(latest_content))
+                    try:
+                        content_still_matches = live_content_matches_source(comparable_content, sources[key])
+                    except (TypeError, ValueError) as error:
+                        raise BloggerReleaseError(f"Blogger LIVE 본문 구조가 바뀌어 갱신을 중단했습니다: {key}") from error
+                    if not content_still_matches:
+                        raise BloggerReleaseError(f"Blogger LIVE 본문이 계획 후 변경되어 보존 갱신을 중단했습니다: {key}")
+                    payload["content"] = latest_content
                 self.client.update_post(post_id, payload)
                 completed_live.append(failed_live)
                 failed_live = None
-        except BloggerApiError as error:
+        except (BloggerApiError, BloggerReleaseError) as error:
             raise BloggerReleaseError(
                 "Blogger 기존 LIVE 글 갱신이 부분 완료되었습니다. "
                 f"prepared={prepared_mutations}, published={published_posts}, "
@@ -642,7 +696,7 @@ class ReleaseClient:
                 raise BloggerReleaseError(f"Blogger label read-back 실패: {key}")
             actual_content = strip_navigation(str(post.get("content", "")))
             actual_content = strip_language_switcher(actual_content)
-            if actual_content.strip() != str(source["content"]).strip():
+            if not live_content_matches_source(actual_content, source):
                 raise BloggerReleaseError(f"Blogger 본문 read-back 실패: {key}")
         return current
 

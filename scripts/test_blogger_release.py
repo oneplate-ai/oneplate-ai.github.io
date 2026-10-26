@@ -122,6 +122,141 @@ class BloggerReleaseTests(unittest.TestCase):
         }
         self.assertEqual(module.plan_release({source["key"]: source}, current), [])
 
+    def test_live_post_with_owner_style_and_entity_encoding_is_not_rewritten(self):
+        module = self._module()
+        key = ("이번 주 AI 한 접시", "ko")
+        plain = (
+            '<p class="post-kicker">이번 주 AI 한 접시</p>'
+            '<h2>1. 모델을 확인합니다. <a class="source-badge" href="https://example.test/source">공식 발표</a></h2>'
+            '<p>모델·비용을 함께 확인합니다.</p>'
+        )
+        styled = (
+            '<h1 style="text-align: center;">이번 주 AI 한 접시</h1>'
+            '<h2>1. 모델을 확인합니다. <a class="source-badge" href="https://example.test/source">'
+            '<span style="font-size: xx-small;">공식 발표</span></a></h2>'
+            '<p>&nbsp;모델·비용을 함께 확인합니다.</p>'
+        )
+        current_body = styled.replace("모델·비용", "모델&#183;비용")
+        source = {
+            "key": key,
+            "title": key[0],
+            "language": "ko",
+            "labels": ["weekly-ai-ko"],
+            "content": styled,
+            "unformatted_content": plain,
+        }
+        current = {
+            key: ("LIVE", {"id": "live-style", "title": key[0], "labels": ["weekly-ai-ko"], "content": current_body})
+        }
+
+        self.assertEqual(module.plan_release({key: source}, current), [])
+
+    def test_label_only_live_update_preserves_existing_body_byte_for_byte(self):
+        module = self._module()
+        ko_key, en_key = ("한국어 제목", "ko"), ("English title", "en")
+        ko_source_body = '<h1 style="text-align: center;">한국어 제목</h1><p>&nbsp;모델·비용을 확인합니다.</p>'
+        ko_live_body = ko_source_body.replace("모델·비용", "모델&#183;비용")
+        sources = {
+            ko_key: {
+                "key": ko_key, "title": ko_key[0], "language": "ko", "labels": ["weekly-ai-ko"],
+                "content": ko_source_body,
+                "unformatted_content": '<p class="post-kicker">한국어 제목</p><p>모델·비용을 확인합니다.</p>',
+                "publish_date": "2000-01-01T00:00:00+00:00",
+            },
+            en_key: {
+                "key": en_key, "title": en_key[0], "language": "en", "labels": ["weekly-ai-en"],
+                "content": "<p>English body</p>", "publish_date": "2000-01-01T00:00:00+00:00",
+            },
+        }
+        posts = {
+            ko_key: {"id": "ko-live", "title": ko_key[0], "labels": ["weekly-ai-ko", "legacy"], "content": ko_live_body, "url": "https://example.test/ko"},
+            en_key: {"id": "en-live", "title": en_key[0], "labels": ["weekly-ai-en"], "content": sources[en_key]["content"], "url": "https://example.test/en"},
+        }
+        current = {ko_key: ("LIVE", posts[ko_key]), en_key: ("LIVE", posts[en_key])}
+        plan = module.plan_release(sources, current)
+        self.assertEqual(len(plan), 1)
+        self.assertTrue(plan[0].get("preserve_content"))
+        writes = []
+
+        class Client:
+            def update_post(self, post_id, payload):
+                writes.append((post_id, dict(payload)))
+                post = next(item for item in posts.values() if item["id"] == post_id)
+                post.update(payload)
+                return post
+
+        release = module.ReleaseClient(Client())
+        release.current = lambda *_args: current
+        release.apply(sources, plan)
+        self.assertEqual(writes[0][0], "ko-live")
+        self.assertEqual(writes[0][1]["content"], ko_live_body)
+
+        stale_posts = {
+            ko_key: dict(posts[ko_key], labels=["weekly-ai-ko", "legacy"], content="<p>changed after plan</p>"),
+            en_key: dict(posts[en_key]),
+        }
+        stale_current = {ko_key: ("LIVE", stale_posts[ko_key]), en_key: ("LIVE", stale_posts[en_key])}
+        release.current = lambda *_args: stale_current
+        writes_before_stale_plan = len(writes)
+        with self.assertRaisesRegex(module.BloggerReleaseError, "기존 LIVE 글 갱신이 부분 완료"):
+            release.apply(sources, plan)
+        self.assertEqual(len(writes), writes_before_stale_plan)
+
+    def test_live_readback_accepts_owner_style_when_text_and_links_match(self):
+        module = self._module()
+        key = ("이번 주 AI 한 접시", "ko")
+        expected = (
+            '<h1 style="text-align: center;">이번 주 AI 한 접시</h1>'
+            '<h2>1. 항목. <a class="source-badge" href="https://example.test/source">'
+            '<span style="font-size: xx-small;">공식 발표</span></a></h2>'
+            '<p>&nbsp;내용·표현을 확인합니다.</p>'
+        )
+        current_body = expected.replace("내용·표현", "내용&#183;표현")
+        source = {
+            "key": key,
+            "title": key[0],
+            "language": "ko",
+            "labels": ["weekly-ai-ko"],
+            "content": expected,
+            "unformatted_content": (
+                '<p class="post-kicker">이번 주 AI 한 접시</p>'
+                '<h2>1. 항목. <a class="source-badge" href="https://example.test/source">공식 발표</a></h2>'
+                '<p>내용·표현을 확인합니다.</p>'
+            ),
+        }
+        current = {
+            key: ("LIVE", {"id": "live-style", "title": key[0], "labels": ["weekly-ai-ko"], "content": current_body})
+        }
+        release = object.__new__(module.ReleaseClient)
+        release.current = lambda _keys: current
+
+        try:
+            verified = release.verify({key: source})
+        except module.BloggerReleaseError as error:
+            self.fail(f"owner-approved Blogger formatting was rejected: {error}")
+        self.assertIs(verified[key][0], "LIVE")
+
+    def test_unformatted_draft_is_updated_before_future_styled_publication(self):
+        module = self._module()
+        key = ("이번 주 AI 한 접시", "ko")
+        plain = '<p class="post-kicker">이번 주 AI 한 접시</p><p>모델·비용을 확인합니다.</p>'
+        styled = '<h1 style="text-align: center;">이번 주 AI 한 접시</h1><p>&nbsp;모델·비용을 확인합니다.</p>'
+        source = {
+            "key": key,
+            "title": key[0],
+            "language": "ko",
+            "labels": ["weekly-ai-ko"],
+            "content": styled,
+            "unformatted_content": plain,
+        }
+        current = {
+            key: ("DRAFT", {"id": "draft-style", "title": key[0], "labels": ["weekly-ai-ko"], "content": plain})
+        }
+
+        changes = module.plan_release({key: source}, current)
+
+        self.assertEqual(changes[0]["action"], "update_draft_then_publish")
+
     def test_pages_readback_requires_each_public_title(self):
         module = self._module()
         approval = {"drafts": [
@@ -185,7 +320,8 @@ class BloggerReleaseTests(unittest.TestCase):
 
         self.assertEqual(set(sources), {("승인된 제목", "ko"), ("Approved title", "en")})
         self.assertEqual(sources[("승인된 제목", "ko")]["labels"], ["easy-ai-ko"])
-        self.assertIn("<p>승인된 제목</p>", sources[("승인된 제목", "ko")]["content"])
+        self.assertEqual(sources[("승인된 제목", "ko")]["content"], "<p>&nbsp;승인된 제목</p>")
+        self.assertEqual(sources[("승인된 제목", "ko")]["unformatted_content"], "<p>승인된 제목</p>")
         self.assertEqual(sources[("승인된 제목", "ko")]["source_path"], "drafts/approved-ko.md")
 
     def test_draft_relative_image_is_mapped_before_blogger_payload(self):
@@ -376,13 +512,15 @@ class BloggerReleaseTests(unittest.TestCase):
     def test_live_update_failure_reports_already_published_counterpart(self):
         module = self._module()
         sources = {
-            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
+            ("한국어 제목", "ko"): {"key": ("한국어 제목", "ko"), "title": "한국어 제목", "language": "ko", "labels": ["easy-ai-ko"], "content": "<h1 style=\"text-align: center;\">제목</h1><p>&nbsp;본문</p>", "unformatted_content": "<p>본문</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
             ("English title", "en"): {"key": ("English title", "en"), "title": "English title", "language": "en", "labels": ["easy-ai-en"], "content": "<p>body</p>", "publish_date": "2000-01-01T00:00:00+00:00"},
         }
         class FakeClient:
-            def __init__(self): self.published = []
+            def __init__(self): self.published = []; self.updates = []
             def publish_draft(self, post_id, _when): self.published.append(post_id)
-            def update_post(self, _post_id, _payload): raise module.BloggerApiError("live update failed")
+            def update_post(self, post_id, payload):
+                self.updates.append((post_id, payload))
+                raise module.BloggerApiError("live update failed")
         release = object.__new__(module.ReleaseClient)
         release.client = FakeClient()
         release.verify_staged_draft = lambda *_args: None
@@ -393,6 +531,7 @@ class BloggerReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(module.BloggerReleaseError, "published=.*en-draft-id.*ko-live-id"):
             release.apply(sources, changes)
         self.assertEqual(release.client.published, ["en-draft-id"])
+        self.assertEqual(release.client.updates[0][1]["content"], "<p>본문</p>")
 
     def test_apply_rejects_unplanned_switcher_write_before_api_mutation(self):
         module = self._module()

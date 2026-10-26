@@ -546,7 +546,7 @@ class BloggerChannel:
         for key, (state, post) in current.items():
             if state == 'LIVE':
                 body = blogger.strip_language_switcher(blogger.strip_navigation(str(post.get('content', ''))))
-                if body.strip() != unit.sources[key]['content'].strip() or sorted(post.get('labels', [])) != unit.sources[key]['labels']:
+                if not blogger.live_content_matches_source(body, unit.sources[key]) or sorted(post.get('labels', [])) != unit.sources[key]['labels']:
                     raise ReleaseError('Blogger LIVE body/labels conflict; publication cannot rewrite existing prose')
         changes = blogger.plan_release(unit.sources, current)
         if any(c['action'] == 'update_live' for c in changes):

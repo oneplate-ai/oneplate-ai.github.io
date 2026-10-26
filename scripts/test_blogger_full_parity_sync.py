@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import unittest
+from typing import Any
 
 from blogger_full_parity_sync import (
     apply_blogger_image_urls,
     canonical_sources,
+    plan as plan_sync,
     target_state,
 )
 
@@ -29,6 +31,32 @@ class BloggerFullParitySyncTests(unittest.TestCase):
         result = apply_blogger_image_urls(content, {old: new})
         self.assertIn(f'src="{new}"', result)
         self.assertIn(f'href="{old}"', result)
+
+    def test_live_source_style_does_not_retroactively_rewrite_plain_or_owner_styled_posts(self):
+        key: tuple[str, str] = ("Weekly", "ko")
+        plain = '<p class="post-kicker">Weekly</p><p>Text.</p>'
+        styled = '<h1 style="text-align: center;">Weekly</h1><p>&nbsp;Text.</p>'
+        source = {
+            "key": key,
+            "path": "_posts/weekly.md",
+            "state": "LIVE",
+            "labels": ["weekly-ai-ko"],
+            "content": styled,
+            "unformatted_content": plain,
+            "publish_date": "2026-10-24T12:00:00+09:00",
+        }
+
+        for body in (plain, styled):
+            current: dict[tuple[str, str], tuple[str, dict[str, Any]]] = {
+                key: ("LIVE", {
+                    "id": "live-1",
+                    "title": key[0],
+                    "labels": source["labels"],
+                    "content": body,
+                })
+            }
+            with self.subTest(body=body):
+                self.assertEqual(plan_sync({key: source}, current), [])
 
 
 if __name__ == "__main__":
