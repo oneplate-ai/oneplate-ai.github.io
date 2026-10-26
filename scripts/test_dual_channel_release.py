@@ -308,6 +308,26 @@ class DualChannelTests(unittest.TestCase):
         with self.assertRaisesRegex(m.ReleaseError, 'LIVE.*conflict'):
             channel.plan(unit, m.public_files(unit))
 
+    def test_blogger_adapter_preserves_live_posts_with_approved_presentation_variant(self):
+        m = self.module()
+        unit = self.unit()
+        current = {}
+        for key, source in unit.sources.items():
+            current[key] = ('LIVE', {
+                'id': 'live-' + key[1],
+                'title': source['title'],
+                'labels': source['labels'],
+                'url': 'https://example.test/' + key[1],
+                'content': source['unformatted_content'],
+            })
+        release = Mock()
+        release.current.return_value = current
+        channel = m.BloggerChannel(client_factory=lambda _unit: release)
+
+        plan = channel.plan(unit, m.public_files(unit))
+
+        self.assertEqual(plan['writes'], [])
+
     def test_weekly_actual_sets_and_bound_approval_inventory_must_all_match(self):
         m = self.module()
         self.assertTrue(hasattr(m, 'check_weekly_evidence'), 'weekly parity gate missing')
