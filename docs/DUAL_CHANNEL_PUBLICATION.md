@@ -60,6 +60,6 @@
 
 `docs/DUAL_CHANNEL_CRON_PROPOSAL.json`은 기존10개 정기/날짜 지정 job을 위한 proposal이다. job ID·일정·기존 Telegram origin·활성 상태를 먼저 read-back하고 `cronjob update`를 통해 승인된 prompt/skills/workdir만 갱신한다. `jobs.json`을 직접 편집하지 않는다. origin/chat ID·credential은 이 공개 proposal에 저장하지 않는다. 중복 publisher를 새로 만들지 않는다.
 
-오늘19시 복구는 현재 `2026-10-19-today-ai-bite.approval.json`을 수정·재승인하지 않고 resolver로 읽는 것으로 준비한다. 실제 예약 적용·실제 글 공개는 릴리스 승인 후에 수행한다. 릴리스 승인 없이 deadline이 가까워져도 조기 공개 또는 무단 예약 변경으로 대신하지 않는다.
+과거 복구 준비 사례(2026-10-19 19:00 KST): 당시 `2026-10-19-today-ai-bite.approval.json`을 수정·재승인하지 않고 resolver로 읽도록 준비했다. 이 날짜 지정 사례와 위 유한 교육 일정은 현재 회차의 새 승인이나 예약 변경 권한이 아니다. 현재 실행은 해당 회차의 정확한 승인 기록·시각·scope를 다시 확인하며, 실제 예약 적용·글 공개는 명시된 릴리스 승인을 따른다. 릴리스 승인 없이 deadline이 가까워져도 조기 공개 또는 무단 예약 변경으로 대신하지 않는다.
 
 검증된 구현과 운영 E2E 검증은 다르다. 로컬 테스트/CI/읽기 전용 plan 통과만으로 자동 Telegram승인→19시 양쪽 공개가 실증되었다고 보고하지 않는다. 첫 승인된 정시 실행 후 채널별 공개 결과 및 Telegram 완료 전달을 별도로 기록한다.
