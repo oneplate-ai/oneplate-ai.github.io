@@ -38,10 +38,10 @@ AI 한 접시는 다음 두 가지 콘텐츠를 구분해 운영합니다.
 5. `ai_generated_images`에는 `/assets/images/...svg` 경로를 적고, SVG 내부 우측 하단에 `AI로 생성한 이미지` 글씨만 넣습니다. 배경 라벨·텍스트 박스·`figcaption` 중복 표기는 금지합니다.
 6. CI의 엄격 검사는 `editorial_rules`가 선언된 글에만 적용합니다. 규칙이 선언되지 않은 이전 공개 글은 일반 CI 경고·차단 대상이 아닙니다.
 
-예시:
+현재 버전의 새 글 선언 예시입니다. 아래 예시 교정은 기존 규칙 버전 `2`의 표기를 맞춘 것이며, 새 편집 기준 도입이나 이전 공개 글의 선언 변경을 뜻하지 않습니다.
 
 ```yaml
-editorial_rules: 1
+editorial_rules: 2
 ai_generated_images:
   - /assets/images/easy-ai-05-example.svg
 ```
@@ -166,9 +166,9 @@ ai_generated_images:
 
 초안과 승인 대기 글은 공개 영역과 `sitemap.xml`에 포함하지 않습니다.
 
-모든 개별 게시글에는 해당 시리즈의 게시글 목록을 직접 포함합니다. 목록에는 글이 1개뿐인 경우에도 현재 글을 표시하며, 새 글이 추가되면 해당 시리즈의 모든 게시글 목록을 갱신합니다. iframe이나 외부 프레임에 의존하지 않습니다.
+현재 Jekyll 발행 경로에서는 개별 게시글의 같은 언어·시리즈 목록과 홈·시리즈·sitemap을 `_posts/` 및 template에서 생성합니다. 글이 1개뿐인 경우에도 현재 글을 표시하는 목록 기준은 유지하며, iframe이나 외부 프레임에 의존하지 않습니다. 소스 발행·staging·검증의 상세 원본은 `docs/DUAL_CHANNEL_PUBLICATION.md` 5절을 따릅니다.
 
-새 글 발행 후에는 저장소 루트에서 `python3 scripts/update_series.py <시리즈슬러그>`를 실행해 해당 시리즈 게시판의 최신 본문과 모든 게시글의 목록을 동기화합니다. 실행 전후에 초안·승인 상태를 확인하며, 이 명령은 자동 공개나 자동 배포를 수행하지 않습니다.
+`scripts/update_series.py`는 legacy HTML 산출물용 도구이며 현재 Jekyll `_posts/` 소스 발행에서는 실행하지 않습니다. 새 글 발행 승인이 이 도구를 통한 과거 공개 HTML의 일괄 재작성 권한으로 확대되지는 않습니다. Blogger의 승인된 쌍에 대한 같은 언어·시리즈 목록 처리는 `docs/BLOGGER_RELEASE_CONTRACT.md`의 별도 계획·검증 범위를 따릅니다.
 
 ### 저장소 동기화 규칙
 

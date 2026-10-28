@@ -16,13 +16,13 @@ Blogger는 GitHub Pages의 HTML 복제본이 아니라, 동일한 승인 원본�
 
 GitHub Pages `_posts/`, 빌드, 공개 URL은 Blogger payload의 원본이나 기본 실행 전제조건이 아닙니다. 과도기 Pages read-back은 명시적 옵션으로 추가할 수 있습니다.
 
-Blogger payload에는 다음 이외의 원문 변경이 허용되지 않습니다.
+Blogger payload의 공개 상태·검증 문구 변환은 아래 목록으로 제한합니다. 별도로 승인된 표시 정책인 6절의 정확한 관리 언어 nav 제거도 적용하되, 일반 nav·본문·메뉴 제거로 확대하지 않습니다. 이는 원본 초안이나 승인 해시를 바꾸는 예외가 아닙니다.
 
 - `published: false`를 `published: true`로 변경
 - `draft`와 `noindex` front matter 제거
 - 검증 문구 블록(`<p>` 또는 `<aside>`의 `post-verification` class) 내부의 `이 초안은`/`This draft`를 `이번 게시글은`/`This post`로 변경
 
-Blogger release는 payload가 승인 초안에서 위 허용 변환만 거쳤음을 검증한 뒤 진행합니다.
+Blogger release는 payload가 승인 초안에서 위 공개 상태·검증 문구 변환 및 6절의 관리 nav 제거만 거쳤음을 검증한 뒤 진행합니다. 6절의 정확한 marker·쌍별 계획·본문 보존·실제 변경 집합 검증을 생략하거나 corpus-wide 정리를 추가할 권한은 생기지 않습니다.
 
 ## 3. 독립 실행 순서
 
