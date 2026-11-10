@@ -22,6 +22,8 @@ from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
 
 import blogger_release as blogger
+import blogger_draft_create as draft_create
+from blogger_draft_update_generic import assert_no_pending
 from publication_gate import GateError, validate_approval
 
 
@@ -203,13 +205,20 @@ def coordinate(unit: ReleaseUnit, channels: dict[str, Any], *, apply: bool = Fal
     weekly_guard(unit, channels)
     results: dict[str, dict] = {}
     plans: dict[str, dict] = {}
+    draft_conflict = False
     for name, channel in channels.items():
         try:
             plans[name] = channel.plan(unit, files)
             results[name] = {'status': 'planned', 'plan': plans[name]}
         except Exception as error:
             results[name] = {'status': 'failed', 'stage': 'plan', 'error': str(error)}
-    if apply:
+            if name == 'blogger' or isinstance(error, blogger.DraftConflictError):
+                draft_conflict = True
+    if apply and draft_conflict:
+        for result in results.values():
+            if result['status'] == 'planned':
+                result.update(status='blocked', stage='plan', error='Blogger DRAFT conflict; no channel applied')
+    elif apply:
         for name, channel in channels.items():
             if name not in plans:
                 continue
@@ -218,6 +227,13 @@ def coordinate(unit: ReleaseUnit, channels: dict[str, Any], *, apply: bool = Fal
             try:
                 unit.verify_frozen()
                 weekly_guard(unit, channels)
+                if name != 'blogger' and 'blogger' in plans:
+                    try:
+                        if channels['blogger'].plan(unit, files) != plans['blogger']:
+                            raise ReleaseError('Blogger plan drift; no channel applied')
+                    except Exception:
+                        draft_conflict = True
+                        raise
                 if channel.plan(unit, files) != plans[name]:
                     raise ReleaseError('channel plan drift; re-inventory and approve a new attempt')
                 unit.verify_frozen()
@@ -227,11 +243,18 @@ def coordinate(unit: ReleaseUnit, channels: dict[str, Any], *, apply: bool = Fal
                 channel.verify(unit, files, completed)
                 results[name].update(status='published_verified', completed=completed)
             except Exception as error:
+                if isinstance(error, blogger.DraftConflictError) or (name == 'blogger' and stage == 'replan'):
+                    draft_conflict = True
                 progress = getattr(channel, 'progress', {})
                 if isinstance(progress, dict) and stage in {'apply', 'verify'}:
                     completed = {**progress, **completed}
                 results[name].update(status='failed', stage=stage, error=str(error), completed=completed,
                                      executor_stage=completed.get('stage', stage))
+                if draft_conflict:
+                    for pending in results.values():
+                        if pending['status'] == 'planned':
+                            pending.update(status='blocked', stage='replan', error='Blogger DRAFT conflict')
+                    break
     good = sum(r['status'] == ('published_verified' if apply else 'planned') for r in results.values())
     status = ('published_verified' if apply else 'planned') if good == len(channels) else 'partial_failure' if good else 'failed'
     if apply and set(channels) != {'pages', 'blogger'} and status == 'published_verified':
@@ -515,6 +538,36 @@ class GuardedBloggerClient(blogger.BloggerClient):
         return result
 
 
+def verify_preview_binding(unit, blog_id, current, state_root):
+    """Fail closed for pending journals or a changed identity of a preview pair."""
+    try:
+        journals = state_root / 'journals'
+        if journals.exists():
+            assert_no_pending(journals, str(blog_id))
+        path = state_root / 'bindings' / (unit.day + '-' + unit.series + '.json')
+        if not path.exists() and not path.is_symlink():
+            return  # Legacy releases did not create preview bindings.
+        if path.is_symlink() or not path.is_file():
+            raise ValueError('invalid binding')
+        binding = json.loads(path.read_text(encoding='utf-8'))
+        if (set(binding) != {'version', 'blog_id', 'day', 'series', 'ids', 'manifest_sha256'}
+                or binding['version'] != 1 or binding['blog_id'] != str(blog_id)
+                or binding['day'] != unit.day or binding['series'] != unit.series
+                or not re.fullmatch(r'[0-9a-f]{64}', binding['manifest_sha256'])
+                or not isinstance(binding['ids'], dict) or set(binding['ids']) != {'ko', 'en'}
+                or any(not isinstance(x, str) or not re.fullmatch(r'[0-9]+', x) for x in binding['ids'].values())
+                or binding['ids']['ko'] == binding['ids']['en']):
+            raise ValueError('invalid binding')
+        if {source['language'] for source in unit.sources.values()} != {'ko', 'en'} or len(unit.sources) != 2:
+            raise ValueError('invalid sources')
+        for key, source in unit.sources.items():
+            selected = current.get(key)
+            if selected is None or selected[0] not in {'DRAFT', 'LIVE'} or str(selected[1].get('id')) != binding['ids'][source['language']]:
+                raise ValueError('preview ID or identity changed')
+    except Exception as error:
+        raise blogger.DraftConflictError('Blogger preview binding or pending journal requires reconciliation') from error
+
+
 class BloggerChannel:
     def __init__(self, *, blog_id=blogger.DEFAULT_BLOG_ID, token_path=blogger.DEFAULT_TOKEN_PATH,
                  client_secret_path=blogger.DEFAULT_CLIENT_SECRET_PATH, client_factory=None):
@@ -543,6 +596,7 @@ class BloggerChannel:
     def plan(self, unit: ReleaseUnit, files: dict[str, bytes]) -> dict:
         self.release = self.client_factory(unit)
         current = self.release.current(set(unit.sources))
+        verify_preview_binding(unit, self.blog_id, current, draft_create.GENERIC_STATE_ROOT)
         for key, (state, post) in current.items():
             if state == 'LIVE':
                 body = blogger.strip_language_switcher(blogger.strip_navigation(str(post.get('content', ''))))

@@ -85,6 +85,17 @@ class CreateTests(unittest.TestCase):
         with self.assertRaises(create.CreateError):
             create.run(Mutating(), '123', self.manifest, self.hash, self.root / 'state')
 
+    def test_actual_create_journal_and_manifest_reconcile_with_fake_transport(self):
+        import blogger_draft_reconcile as reconcile
+        ids = create.run(self.api, '123', self.manifest, self.hash, None)
+        before_calls = len([call for call in self.api.calls if call[0] == 'POST'])
+        result = reconcile.reconcile(self.api, '123', str(self.manifest), self.hash, ids)
+        self.assertEqual(result['ids'], ids)
+        self.assertEqual(len([call for call in self.api.calls if call[0] == 'POST']), before_calls)
+        self.assertTrue((self.root / 'boundary' / 'bindings' / '2026-11-07-weekly-ai.json').is_file())
+        self.assertTrue(Path(result['archive']).is_file())
+        self.assertFalse((self.root / 'boundary' / 'journals' / ('create-' + self.hash + '.jsonl')).exists())
+
     def test_plan_no_write_then_create_pair_and_readback(self):
         plan = create.plan(self.api, '123', self.manifest, self.hash)
         self.assertEqual([p['action'] for p in plan], ['create', 'create'])

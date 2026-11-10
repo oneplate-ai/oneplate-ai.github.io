@@ -15,7 +15,7 @@ class BloggerReleaseTests(unittest.TestCase):
         except ModuleNotFoundError as error:
             self.fail(f"Blogger release automation is missing: {error}")
 
-    def test_draft_is_updated_then_promoted_as_one_release_item(self):
+    def test_different_draft_is_blocked_instead_of_updated(self):
         module = self._module()
         source = {
             "key": ("2026년 10월 15일", "ko"),
@@ -28,10 +28,8 @@ class BloggerReleaseTests(unittest.TestCase):
         current = {
             source["key"]: ("DRAFT", {"id": "draft-1", "title": source["title"], "labels": source["labels"], "content": "<p>old</p>"})
         }
-        self.assertEqual(
-            module.plan_release({source["key"]: source}, current),
-            [{"action": "update_draft_then_publish", "id": "draft-1", "key": source["key"]}],
-        )
+        with self.assertRaises(module.DraftConflictError):
+            module.plan_release({source["key"]: source}, current)
 
     def test_identical_live_post_with_combined_label_is_a_noop_and_will_not_be_duplicated(self):
         module = self._module()
@@ -236,7 +234,7 @@ class BloggerReleaseTests(unittest.TestCase):
             self.fail(f"owner-approved Blogger formatting was rejected: {error}")
         self.assertIs(verified[key][0], "LIVE")
 
-    def test_unformatted_draft_is_updated_before_future_styled_publication(self):
+    def test_unformatted_draft_blocks_styled_publication_until_reconciled(self):
         module = self._module()
         key = ("이번 주 AI 한 접시", "ko")
         plain = '<p class="post-kicker">이번 주 AI 한 접시</p><p>모델·비용을 확인합니다.</p>'
@@ -253,9 +251,8 @@ class BloggerReleaseTests(unittest.TestCase):
             key: ("DRAFT", {"id": "draft-style", "title": key[0], "labels": ["weekly-ai-ko"], "content": plain})
         }
 
-        changes = module.plan_release({key: source}, current)
-
-        self.assertEqual(changes[0]["action"], "update_draft_then_publish")
+        with self.assertRaises(module.DraftConflictError):
+            module.plan_release({key: source}, current)
 
     def test_pages_readback_requires_each_public_title(self):
         module = self._module()
@@ -481,10 +478,8 @@ class BloggerReleaseTests(unittest.TestCase):
         release = object.__new__(module.ReleaseClient)
         release.client = object()
         release.verify_staged_draft = lambda *_args: (_ for _ in ()).throw(module.BloggerReleaseError("staged read-back failed"))
-        changes = [{"action": "update_draft_then_publish", "id": "draft-42", "key": source["key"]}]
-        class UpdatingClient:
-            def update_draft(self, *_args): pass
-        release.client = UpdatingClient()
+        changes = [{"action": "create_draft_then_publish", "key": source["key"]}]
+        release.create_fresh_draft = lambda _payload: {"id": "draft-42"}
         with self.assertRaisesRegex(module.BloggerReleaseError, "prepared=.*draft-42"):
             release.apply({source["key"]: source}, changes)
 

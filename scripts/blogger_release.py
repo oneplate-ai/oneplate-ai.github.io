@@ -41,6 +41,10 @@ class BloggerReleaseError(RuntimeError):
     """The approved Blogger release cannot be planned or verified safely."""
 
 
+class DraftConflictError(BloggerReleaseError):
+    """An existing draft no longer matches the exact approved content."""
+
+
 _DRAFT_FRONT_MATTER_RE = re.compile(r"\A---\n(?P<front>.*?)\n---\n(?P<body>.*)\Z", re.DOTALL)
 _VERIFICATION_NOTE_RE = re.compile(
     r"(?P<open><(?:p|aside)\b[^>]*\bclass=[\"'](?P<classes>[^\"']*)[\"'][^>]*>)"
@@ -368,7 +372,8 @@ def plan_release(
         source_identity = label_identity(source["labels"])
         existing_identity = label_identity(post.get("labels", []))
         if source_identity is None or existing_identity is None or source_identity != existing_identity:
-            raise BloggerReleaseError(
+            error_type = DraftConflictError if state == "DRAFT" else BloggerReleaseError
+            raise error_type(
                 f"Blogger title/language 충돌: 다른 series 글을 덮어쓸 수 없습니다: {key} "
                 f"(expected={source_identity}, actual={existing_identity})"
             )
@@ -397,8 +402,9 @@ def plan_release(
                 if remove_language_switcher(original_content) != original_content:
                     changes[-1]["remove_language_switcher"] = True
         elif state == "DRAFT":
-            action = "publish_draft" if labels_match and content_match else "update_draft_then_publish"
-            changes.append({"action": action, "id": str(post["id"]), "key": key})
+            if not labels_match or not content_match:
+                raise DraftConflictError(f"Blogger DRAFT differs from approved source; preserve existing draft: {key}")
+            changes.append({"action": "publish_draft", "id": str(post["id"]), "key": key})
         else:
             raise BloggerReleaseError(f"지원하지 않는 Blogger state: {state}")
 
@@ -512,6 +518,8 @@ class ReleaseClient:
         if len(publish_times) != 1:
             raise BloggerReleaseError("Blogger release 한·영 publish_date가 서로 다릅니다.")
         require_immediate_publish_time(next(iter(publish_times)))
+        if any(change.get("action") == "update_draft_then_publish" for change in changes):
+            raise DraftConflictError("DRAFT update is forbidden during publication; reconcile and reapprove first")
         prepared: list[tuple[str, dict[str, Any]]] = []
         live_updates: list[tuple[str, dict[str, Any], tuple[str, str], str, bool]] = []
         prepared_mutations: list[str] = []
@@ -540,12 +548,6 @@ class ReleaseClient:
                         raise BloggerReleaseError("Blogger 새 DRAFT 응답에 유효한 id가 없습니다.")
                     prepared.append((post_id, source))
                     prepared_mutations.append(f"create:{source['language']}:{post_id}")
-                    failed_prepare = None
-                elif action == "update_draft_then_publish":
-                    failed_prepare = {"action": action, "id": str(change["id"]), "language": str(source["language"])}
-                    self.client.update_draft(str(change["id"]), payload)
-                    prepared.append((str(change["id"]), source))
-                    prepared_mutations.append(f"update:{source['language']}:{change['id']}")
                     failed_prepare = None
                 elif action == "publish_draft":
                     prepared.append((str(change["id"]), source))
@@ -582,10 +584,11 @@ class ReleaseClient:
         for post_id, source in prepared:
             try:
                 failed_publish = {"id": post_id, "language": str(source["language"]), "action": "publish_draft"}
+                self.verify_staged_draft(post_id, source)
                 self.client.publish_draft(post_id, str(source["publish_date"]))
                 published_posts.append({"id": post_id, "language": str(source["language"])})
                 failed_publish = None
-            except BloggerApiError as error:
+            except (BloggerApiError, BloggerReleaseError) as error:
                 published_languages = {item["language"] for item in published_posts}
                 remaining = sorted({str(item["language"]) for _, item in prepared} - published_languages)
                 raise BloggerReleaseError(
@@ -715,8 +718,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="과도기 옵션: Blogger 계획/발행 전 Pages URL을 추가 검증",
     )
-    parser.add_argument("--apply", action="store_true", help="Blogger API에 실제 반영")
+    parser.add_argument("--apply", action="store_true", help="사용 불가: 양쪽 coordinator를 사용하십시오")
     args = parser.parse_args(argv)
+    if args.apply:
+        print("Blogger 단독 발행은 차단됩니다. 승인된 양쪽 coordinator를 사용하십시오.", file=sys.stderr)
+        return 1
     try:
         root = args.root.resolve()
         approval = validate_approval(args.approval.resolve(), root)
@@ -730,22 +736,12 @@ def main(argv: list[str] | None = None) -> int:
         release = ReleaseClient(BloggerClient(token, args.blog_id))
         changes = plan_release(sources, release.current(set(sources)))
         result: dict[str, Any] = {
-            "mode": "apply" if args.apply else "plan",
+            "mode": "plan",
             "sources": len(sources),
             "pages_readback_required": args.require_pages_readback,
             "pages_readback": pages_urls,
             "changes": changes,
         }
-        if args.apply:
-            mutation_state = release.apply(sources, changes)
-            try:
-                current = release.verify(sources)
-                result["blogger_readback"] = verify_blogger_public_pair(sources, current)
-            except (BloggerApiError, BloggerReleaseError) as error:
-                raise BloggerReleaseError(
-                    "Blogger apply 후 공개 URL 검증이 실패했습니다. "
-                    f"mutations={mutation_state}; 위 ID를 read-back한 뒤 동일 release unit으로 재시도하십시오."
-                ) from error
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0
     except (OSError, ValueError, KeyError, json.JSONDecodeError, BloggerApiError, BloggerReleaseError) as error:

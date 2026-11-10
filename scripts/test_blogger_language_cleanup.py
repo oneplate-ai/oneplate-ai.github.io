@@ -119,8 +119,8 @@ class LanguageCleanupTests(unittest.TestCase):
         sources, current = self.live_pair()
         for key in current:
             current[key] = ('DRAFT', dict(current[key][1], content='<nav class="oneplate-language-switcher">old</nav>' + sources[key]['content']))
-        actions = {tuple(change['key']): change['action'] for change in module.plan_release(sources, current) if 'key' in change}
-        self.assertEqual(set(actions.values()), {'update_draft_then_publish'})
+        with self.assertRaises(module.DraftConflictError):
+            module.plan_release(sources, current)
 
     def test_mixed_pair_apply_publishes_draft_without_readding_series_navigation(self):
         import blogger_release as module
