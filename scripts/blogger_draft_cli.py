@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 import blogger_draft_create as create
+import blogger_draft_reconcile as reconcile
 import blogger_draft_bound_update as update
 from blogger_draft_guarded_transport import GuardedTransport
 from blogger_full_parity_sync import fresh_access_token
@@ -70,6 +71,9 @@ def main(argv=None):
             p.add_argument('--ko-id')
             p.add_argument('--en-id')
             p.add_argument('--output', type=Path)
+    rec = sub.add_parser('reconcile-create', help='완료 저널과 원격 DRAFT 대조 후 보존 이동')
+    for option in ('blog-id', 'token-path', 'client-secret-path', 'manifest', 'manifest-sha256', 'ko-id', 'en-id'):
+        rec.add_argument('--' + option, required=True)
     args = parser.parse_args(argv)
     try:
         if not re.fullmatch(r'[0-9]+', args.blog_id):
@@ -77,6 +81,13 @@ def main(argv=None):
         if args.operation == 'prepare-create':
             result = prepare_create(args.blog_id, {'ko': args.ko_source, 'en': args.en_source}, args.image_map, args.output)
             print(json.dumps(result, sort_keys=True))
+            return 0
+        if args.operation == 'reconcile-create':
+            token = fresh_access_token(Path(args.token_path), Path(args.client_secret_path))
+            request = GuardedTransport(BloggerClient(token, args.blog_id))
+            result = reconcile.reconcile(request, args.blog_id, args.manifest, args.manifest_sha256,
+                                         {'ko': args.ko_id, 'en': args.en_id})
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             return 0
         if args.operation == 'create':
             if not args.manifest or not re.fullmatch(r'[0-9a-f]{64}', args.manifest_sha256 or ''):
