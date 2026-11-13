@@ -28,7 +28,7 @@ class WeeklyEvidenceTests(unittest.TestCase):
             path = fixture.root / d['exact_draft_path']
             text = path.read_text().replace('series: easy-ai', 'series: weekly-ai').replace('date: 2026-10-15', 'date: 2026-10-17').replace('translation_key: easy-ai-07', 'translation_key: weekly-ai-2026-10-17')
             path.write_text(text)
-        evidence = {'start':'2026-10-10','end':'2026-10-16','posts':[{'date':'2026-10-12','lang':'ko','title':'일간'}, {'date':'2026-10-12','lang':'en','title':'Daily'}]}
+        evidence = {'schema_version':1, 'source_channel':'blogger', 'start':'2026-10-10','end':'2026-10-16','posts':[{'date':'2026-10-12','lang':'ko','title':'일간'}, {'date':'2026-10-12','lang':'en','title':'Daily'}]}
         evidence['posts'].sort(key=lambda item:(item['date'],item['lang'],item['title']))
         epath = fixture.root / 'evidence.json'
         epath.write_text(json.dumps(evidence))
@@ -40,8 +40,29 @@ class WeeklyEvidenceTests(unittest.TestCase):
         bound = subprocess.run(cmd + ['--weekly-evidence', str(epath)], capture_output=True, text=True)
         self.assertEqual(bound.returncode, 0, bound.stderr)
         self.assertEqual(json.loads(output.read_text())['weekly_evidence'], evidence)
+        from publication_gate import validate_approval, GateError
+        for invalid in [{**evidence, 'source_channel':'pages'}, {**evidence, 'posts':evidence['posts'][:1]}, {**evidence, 'schema_version':True}]:
+            record = json.loads(output.read_text())
+            record['weekly_evidence'] = invalid
+            output.write_text(json.dumps(record))
+            with self.subTest(invalid=invalid), self.assertRaises(GateError):
+                validate_approval(output, fixture.root, 'weekly-ai', '2026-10-17')
 
-    def test_export_cli_reads_both_and_never_overwrites_reviewed_evidence(self):
+    def test_blogger_evidence_has_explicit_scope_and_never_uses_dual_guard(self):
+        import weekly_source_evidence as m
+        from unittest.mock import patch
+        rows = [{'date':'2026-10-12','lang':'ko','title':'일간'}, {'date':'2026-10-12','lang':'en','title':'Daily'}]
+        self.assertTrue(hasattr(m, 'build_blogger_evidence'), 'Blogger-only evidence builder missing')
+        with patch('dual_channel_release.check_weekly_evidence', side_effect=AssertionError('no fabricated parity')):
+            evidence = m.build_blogger_evidence('2026-10-17', rows)
+            self.assertEqual(evidence['source_channel'], 'blogger')
+            self.assertEqual(evidence['schema_version'], 1)
+            self.assertEqual(m.validate_evidence('2026-10-17', evidence), evidence)
+        for bad in [rows[:1], rows + rows, [], [{**rows[0], 'date':'2026-10-09'}, rows[1]]]:
+            with self.subTest(rows=bad), self.assertRaises(ValueError):
+                m.build_blogger_evidence('2026-10-17', bad)
+
+    def test_export_cli_reads_blogger_only_and_never_overwrites_reviewed_evidence(self):
         import json
         import tempfile
         from pathlib import Path
@@ -51,14 +72,15 @@ class WeeklyEvidenceTests(unittest.TestCase):
         pages, blog = Mock(), Mock()
         pages.daily_inventory.return_value = rows
         blog.daily_inventory.return_value = rows
-        with tempfile.TemporaryDirectory() as tmp, patch.object(m, 'PagesChannel', return_value=pages), patch.object(m, 'BloggerChannel', return_value=blog):
+        with tempfile.TemporaryDirectory() as tmp, patch('dual_channel_release.PagesChannel', side_effect=AssertionError('Pages forbidden')), patch.object(m, 'BloggerChannel', return_value=blog):
             output = Path(tmp)/'evidence.json'
             self.assertEqual(m.main(['--date','2026-10-17','--output',str(output)]),0)
             before = output.read_bytes()
             self.assertEqual(len(json.loads(before)['posts']),2)
             self.assertEqual(m.main(['--date','2026-10-17','--output',str(output)]),1)
             self.assertEqual(output.read_bytes(),before)
-            self.assertEqual(pages.daily_inventory.call_count,2)
+            pages.daily_inventory.assert_not_called()
+            self.assertEqual(json.loads(before)['source_channel'], 'blogger')
             self.assertEqual(blog.daily_inventory.call_count,2)
 
     def test_evidence_rejects_invalid_shapes_empty_or_wrong_window(self):

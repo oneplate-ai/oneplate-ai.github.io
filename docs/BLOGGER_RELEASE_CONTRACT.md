@@ -1,10 +1,12 @@
 # Blogger 독립 발행 계약
 
+현재 운영 진입점은 [Blogger 단독 발행](BLOGGER_ONLY_PUBLICATION.md)의 `blogger_channel_release.py`입니다. 아래 generic 도구와 Pages 선택 옵션은 과거 호환 인터페이스이며 정기 운영에서 직접 호출하지 않습니다.
+
 ## 1. 목적
 
-Blogger는 GitHub Pages의 HTML 복제본이 아니라, 동일한 승인 원본에서 독립적으로 공개·검증되는 배포 대상입니다.
+Blogger는 AI 한 접시의 유일한 독자용 공개·미리보기 채널이며 승인된 한영 원본에서 직접 공개·검증합니다.
 
-최종 원본은 승인된 한·영 `drafts/` 파일과 schema v2 승인 기록입니다. 기본 Blogger release는 Pages URL·빌드·도메인에 의존하지 않습니다. 과도기 안전장치가 필요한 운영에서는 명시적으로 `--require-pages-readback`을 지정해 Pages 공개 URL 검증을 추가할 수 있습니다.
+최종 원본은 승인된 한·영 `drafts/` 파일과 schema v2 승인 기록입니다. 기본 Blogger release는 Pages URL·빌드·도메인에 의존하지 않습니다. 과거 호환 옵션 `--require-pages-readback`은 현재 운영에서 사용하지 않습니다.
 
 ## 2. 승인 원본과 허용 변환
 
@@ -14,7 +16,7 @@ Blogger는 GitHub Pages의 HTML 복제본이 아니라, 동일한 승인 원본�
 2. 승인된 한·영 `drafts/` 원본 자체. 발행기는 허용된 공개 상태 변환만 적용해 Blogger payload를 직접 만듭니다.
 3. 승인 기록의 `blogger_image_map_sha256`과 바이트 단위로 일치하는 Blogger 이미지 URL 매핑. 매핑 대상은 HTTPS Google/Blogger 미디어 URL이어야 하며 Pages URL은 거부합니다.
 
-GitHub Pages `_posts/`, 빌드, 공개 URL은 Blogger payload의 원본이나 기본 실행 전제조건이 아닙니다. 과도기 Pages read-back은 명시적 옵션으로 추가할 수 있습니다.
+GitHub Pages `_posts/`, 빌드, 공개 URL은 Blogger payload의 원본이나 기본 실행 전제조건이 아닙니다. 현재 운영은 Pages read-back을 추가하지 않습니다.
 
 Blogger payload의 공개 상태·검증 문구 변환은 아래 목록으로 제한합니다. 별도로 승인된 표시 정책인 6절의 정확한 관리 언어 nav 제거도 적용하되, 일반 nav·본문·메뉴 제거로 확대하지 않습니다. 이는 원본 초안이나 승인 해시를 바꾸는 예외가 아닙니다.
 
@@ -29,22 +31,22 @@ Blogger release는 payload가 승인 초안에서 위 공개 상태·검증 문�
 운영 호출은 승인 기록만 지정해 읽기 전용 계획부터 만듭니다.
 
 ```sh
-python3 scripts/blogger_release.py --root /path/to/repository --approval /path/outside-git/approvals/<unit>.json --image-urls /path/to/approved-blogger-image-map.json
+python3 scripts/blogger_channel_release.py --root /path/to/editorial --series <series> --date <YYYY-MM-DD> --image-urls /path/to/approved-blogger-image-map.json
 ```
 
-이 실행은 `_posts/` 경로를 받지 않으며, Pages URL을 기본 조회하지 않습니다. `--image-urls` 파일은 승인 기록의 `blogger_image_map_sha256`과 정확히 일치해야 합니다. 실제 쓰기는 같은 명령에 명시적으로 `--apply`를 추가할 때만 시작합니다. scheduler 연결과 자동 승인 실행은 이 계약에 포함되지 않으며 별도 단계입니다.
+이 실행은 `_posts/` 경로를 받지 않으며, Pages URL을 기본 조회하지 않습니다. `--image-urls` 파일은 승인 기록의 `blogger_image_map_sha256`과 정확히 일치해야 합니다. 실제 쓰기는 같은 명령에 명시적으로 `--apply`를 추가할 때만 시작합니다. 실제 정기 연결은 `BLOGGER_ONLY_PUBLICATION.md`와 전용 coordinator의 안전 게이트를 따릅니다.
 
-1. Blogger release는 `(title, language)`를 식별자로 현재 LIVE·DRAFT 글을 읽습니다.
+1. Blogger release는 `(title, language)` 및 승인된 series·정확한 ID/binding을 검증하며 LIVE·DRAFT·SCHEDULED를 구분해 읽습니다.
 2. 각 언어 글은 다음 중 하나만 실행합니다.
    - 없음: DRAFT 생성 후 공개
    - 동일한 DRAFT: 공개
-   - 다른 DRAFT: 승인 본문으로 갱신 후 공개
-   - 다른 LIVE: 같은 글을 갱신
+   - 다른 DRAFT: 보존하고 별도 reconciliation·재검토 전 공개 보류
+   - 다른 LIVE: 기존 글을 덮어쓰지 않고 충돌로 보류
    - 동일한 LIVE: 변경 없음
 3. API read-back으로 LIVE 상태, labels, 승인 본문을 확인합니다.
 4. 한·영 Blogger 공개 URL을 읽어 각각 승인 제목이 실제로 노출되는지 확인합니다.
 5. 승인 쌍의 같은 언어·시리즈 목록을 계획·검증하고 기존 목록 블록은 보존합니다. 표시용 언어 nav 정책은 아래 6절을 따릅니다.
-6. 과도기에만 `--require-pages-readback`으로 승인된 한·영 Pages URL의 제목 노출을 추가 검증합니다. 이 검증의 실패는 Blogger 원본이나 기존 Blogger 글을 변경하지 않습니다.
+6. 현재 운영에서는 Pages read-back을 호출하지 않습니다. 동일 제목의 SCHEDULED·중복 ID·불완전 inventory는 공개 전 보류합니다.
 
 `--apply`는 각 Blogger 글을 미래 시각으로 예약하지 않습니다. 이 명령은 실행 시점에 두 언어가 모두 LIVE이며 공개 URL로 검증되는 것을 전제로 합니다. 따라서 `scheduled_publish_at`이 아직 미래라면 변경 전에 중단하며, 예약 시각 이후 동일 승인 release unit으로 실행합니다.
 
@@ -54,7 +56,7 @@ python3 scripts/blogger_release.py --root /path/to/repository --approval /path/o
 
 Blogger 공개 본문에는 GitHub Pages 이미지 URL을 남기지 않습니다. Pages 자산을 참조하는 `<img>`는 명시적인 Blogger URL 매핑이 없으면 차단합니다.
 
-Blogger 공개 URL, Blogger 이미지 URL, 시리즈 목록과 표시용 언어 nav 부재는 각각 별도로 읽어 검증합니다. Pages 실패와 Blogger 실패는 같은 상태로 취급하지 않으며, 한쪽 실패가 다른 쪽의 승인 원본을 변경하거나 재생성하지 않습니다.
+Blogger 공개 URL, Blogger 이미지 URL, 시리즈 목록과 표시용 언어 nav 부재는 각각 별도로 읽어 검증합니다. 한영의 부분 실패가 승인 원본을 임의 변경·재생성하거나 성공한 글을 삭제하는 사유가 되지 않습니다.
 
 ## 5. 운영 경계
 
