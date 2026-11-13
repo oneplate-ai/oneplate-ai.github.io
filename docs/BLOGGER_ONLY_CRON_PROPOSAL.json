@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "status": "proposal; apply only after reviewed code deployment and read-only rehearsal",
+  "preserve": "existing IDs, delivery/origin, model follow-main policy; no duplicates",
+  "jobs": [
+    {
+      "id": "237dd1616856",
+      "name": "오늘 AI 한입 — Blogger 초안 검토 요청",
+      "schedule": "0 12 * * 1,3,5",
+      "series": "today-ai-bite",
+      "role": "preview",
+      "timezone": "Asia/Seoul",
+      "workdir": "/root/oneplate-ai.github.io",
+      "attach_to_session": true,
+      "skills": [
+        "working-agreement",
+        "ai-content-publishing",
+        "blogger-content-operations"
+      ],
+      "prompt": "현재 작업 series=today-ai-bite, role=preview입니다.\n월수금12시일간검토요청,같은날19시공개입니다. 월요일은직전금요일정오부터이번정오까지,수/금은직전승인요청정오부터이번정오직전까지공식자료를수집합니다.\nAI 한 접시 Blogger 단독 운영입니다. 공개·미리보기 대상은 Blogger 하나이며 GitHub는 코드 보관용입니다. Pages production/Preview 배포, GitHub 원격 읽기/쓰기·빌드·sitemap·채널간 일치 검사·Pages URL 확인을 실행하지 마십시오.\n먼저 /root/.hermes/work-records/INDEX.md, /root/oneplate-ai.github.io/PUBLISHING_RULES.md, /root/oneplate-ai.github.io/docs/BLOGGER_ONLY_PUBLICATION.md 및 /root/workspaces/oneplate-ai.github.io/docs/BLOGGER_NATIVE_PREVIEW_RUNBOOK.md를 읽습니다. 원고 root=/root/oneplate-ai.github.io, 코드=/root/workspaces/oneplate-ai.github.io/scripts. 실제 KST와 exact series/date/원고·이미지맵을 확인합니다. 새 유료서비스·테마/메뉴·인증/계정/DNS·다른 글 수정·자동삭제는 금지합니다. 토큰·credential·비밀 preview 렌더URL을 출력/전달하지 마십시오. 원래 Telegram 대화와 후속 응답 연결은 보존합니다.\n공식 원문·발표일/이용조건·주장·회사 다양성을 확인하고 정확한 한국어·영어 원고를 drafts/에 published:false,draft:true,noindex:true로 완성합니다. 직전 글 중복을 피하고 항목수를 억지로 채우지 마십시오. prepare_blogger_image_map.py로 .publishing-approvals/YYYY-MM-DD-<series>.blogger-image-map.json을 준비합니다. 이미지가 있으면 실제 Google/Blogger mapping 없이 준비 완료라고 하지 마십시오. 원고/이미지의 검토 버전을 동결한 뒤 Native Preview runbook에 따라 무쓰기 create계획부터 실행합니다.\nBlogger DRAFT 생성·대조 동안 UI/다른호스트/자동화가 쓰지 않는 유효한 단일 작성자 창이 확인돼야 합니다. 로컬잠금만으로 확인됐다고 하지 말고 미확인시 보류를 보고하십시오. 미해결 저널·동명글·map 미준비·버전충돌·이전 쓰기 불확실성은 보류하며 이름변경/다른경로로 우회하거나 맹목재시도하지 마십시오. 허용된 DRAFT전용 create --apply 한 번 후 정확 KO/EN ID를 readback하고 reconcile-create로 binding·완전저널을 대조/보존합니다. 기존 editedDRAFT를 덮어쓰지 마십시오.\nTelegram에 양쪽 관리자 편집 링크·원고경로/SHA·map경로/SHA/readiness·Blogger만 공개할 예약시각과 실제검증/미검증을 함께 안내합니다. 사용자 기기접근은 실제확인 전 미검증입니다. 사용자가 exact pair 공개를 승인하기 전 approval파일/LIVE공개는 금지합니다. 승인 답장 후 현재해시를 재확인하고 create_approval_record.py로 schema2 .publishing-approvals/YYYY-MM-DD-<series>.approval.json을 생성·검증합니다. 승인 문구는 실제답장원문, approved_at은실제시각, scheduled_publish_at은합의된발행일19시KST로 기록합니다. 주간은 검토당시 --weekly-evidence를 결합합니다. 승인후원고/map/evidence변경시새미리보기/재승인, 승인응답은조기공개권한이아닙니다. 기존발행job의실제next_run이대상일정을덮는지확인하되중복job은만들지마십시오.\n"
+    },
+    {
+      "id": "573788297ddb",
+      "name": "오늘 AI 한입 — Blogger 승인본 공개",
+      "schedule": "0 19 * * 1,3,5",
+      "series": "today-ai-bite",
+      "role": "publish",
+      "timezone": "Asia/Seoul",
+      "workdir": "/root/oneplate-ai.github.io",
+      "attach_to_session": true,
+      "skills": [
+        "working-agreement",
+        "ai-content-publishing",
+        "blogger-content-operations"
+      ],
+      "prompt": "현재 작업 series=today-ai-bite, role=publish입니다.\n월수금19시일간공개,발행일은실제KST당일입니다.\nAI 한 접시 Blogger 단독 운영입니다. 공개·미리보기 대상은 Blogger 하나이며 GitHub는 코드 보관용입니다. Pages production/Preview 배포, GitHub 원격 읽기/쓰기·빌드·sitemap·채널간 일치 검사·Pages URL 확인을 실행하지 마십시오.\n먼저 /root/.hermes/work-records/INDEX.md, /root/oneplate-ai.github.io/PUBLISHING_RULES.md, /root/oneplate-ai.github.io/docs/BLOGGER_ONLY_PUBLICATION.md 및 /root/workspaces/oneplate-ai.github.io/docs/BLOGGER_NATIVE_PREVIEW_RUNBOOK.md를 읽습니다. 원고 root=/root/oneplate-ai.github.io, 코드=/root/workspaces/oneplate-ai.github.io/scripts. 실제 KST와 exact series/date/원고·이미지맵을 확인합니다. 새 유료서비스·테마/메뉴·인증/계정/DNS·다른 글 수정·자동삭제는 금지합니다. 토큰·credential·비밀 preview 렌더URL을 출력/전달하지 마십시오. 원래 Telegram 대화와 후속 응답 연결은 보존합니다.\n공개 직전 실제 KST와 exact 해당 회차의 승인파일/원고/이미지맵 해시, 기존실행/저널 및 Blogger상태를 확인합니다. 새원고·승인·map을 만들어 통과시키거나 전날글로 대체하지 마십시오. 무쓰기계획 명령:\npython3 /root/workspaces/oneplate-ai.github.io/scripts/blogger_channel_release.py --root /root/oneplate-ai.github.io --series <series> --date <발행일> --image-urls /root/oneplate-ai.github.io/.publishing-approvals/<발행일>-<series>.blogger-image-map.json\n승인없음·해시/제목/ID/binding/본문/라벨/중복/저널/weekly evidence 충돌 또는 예약시각 전이면 공개하지 말고 정확한 이유를 보고합니다. 공개승인/시각/단일작성자 조건과정확pair계획을확인한경우에만같은명령에--apply를추가합니다. 다른generic발행명령으로안전게이트를우회하지마십시오. 동일LIVE는무변경, editedDRAFT/다른LIVE는보존하고보류합니다. 외부요청은원자적이지않으므로partial/uncertain시성공·시도ID와단계를보존하고API재조회전재시도하지마십시오.\n양쪽언어의freshAPI LIVE/정확본문·labels·익명공개URL·이미지 및최종변경없음plan이확인돼야전체완료입니다. 한언어라도실패/미확정이면언어별상태/ID/URL/실패단계를보고합니다. scheduler ok·로컬검사·API응답·공개URL검증·Telegram전달을구분합니다. 과금/429실행실패가콘텐츠승인취소를뜻하지않으며늦은발행은원래시각승인과구분해재확인합니다.\n\n공개 성공 후 /root/workspaces/oneplate-ai.github.io/docs/BLOGGER_PUBLISH_JOURNAL_RUNBOOK.md에 따라 같은 잠금 안에서 승인해시·정확ID·fresh LIVE/API·익명URL·zero-change를 대조한 완전 성공 저널만 원본 보존 archive하고 후속 계획을 확인합니다. 불완전·불확실·손상 저널은 이동/삭제/자동 재시도하지 않습니다. reconcile-create를 공개저널에 사용하지 않습니다.\n"
+    },
+    {
+      "id": "ac4e7ab54ea3",
+      "name": "주간 AI 한 접시 — Blogger 초안 검토 요청",
+      "schedule": "30 19 * * 5",
+      "series": "weekly-ai",
+      "role": "preview",
+      "timezone": "Asia/Seoul",
+      "workdir": "/root/oneplate-ai.github.io",
+      "attach_to_session": true,
+      "skills": [
+        "working-agreement",
+        "ai-content-publishing",
+        "blogger-content-operations"
+      ],
+      "prompt": "현재 작업 series=weekly-ai, role=preview입니다.\nweekly-ai 회차입니다. 발행일은 금요일요청의다음날토요일(토요일실행이면당일)이며 범위는그토요일의7일전토요일부터전날금요일까지입니다. 미리보기작성전에 다음 명령으로 실제 Blogger LIVE 일간 한영쌍만새파일로동결합니다:\npython3 /root/workspaces/oneplate-ai.github.io/scripts/blogger_weekly_evidence.py --date <토요일발행일> --output <새비공개review.evidence.json>\n실제공개근거만본문에사용하고 미공개초안·Pages목록을섞지마십시오. 누락언어/중복/비정상inventory는보류합니다. evidence날짜·pair수를검토안내에함께제시하고 승인후 --weekly-evidence로그exactsnapshot을결합합니다. 승인후집합변경은재검토/재승인입니다.\nAI 한 접시 Blogger 단독 운영입니다. 공개·미리보기 대상은 Blogger 하나이며 GitHub는 코드 보관용입니다. Pages production/Preview 배포, GitHub 원격 읽기/쓰기·빌드·sitemap·채널간 일치 검사·Pages URL 확인을 실행하지 마십시오.\n먼저 /root/.hermes/work-records/INDEX.md, /root/oneplate-ai.github.io/PUBLISHING_RULES.md, /root/oneplate-ai.github.io/docs/BLOGGER_ONLY_PUBLICATION.md 및 /root/workspaces/oneplate-ai.github.io/docs/BLOGGER_NATIVE_PREVIEW_RUNBOOK.md를 읽습니다. 원고 root=/root/oneplate-ai.github.io, 코드=/root/workspaces/oneplate-ai.github.io/scripts. 실제 KST와 exact series/date/원고·이미지맵을 확인합니다. 새 유료서비스·테마/메뉴·인증/계정/DNS·다른 글 수정·자동삭제는 금지합니다. 토큰·credential·비밀 preview 렌더URL을 출력/전달하지 마십시오. 원래 Telegram 대화와 후속 응답 연결은 보존합니다.\n공식 원문·발표일/이용조건·주장·회사 다양성을 확인하고 정확한 한국어·영어 원고를 drafts/에 published:false,draft:true,noindex:true로 완성합니다. 직전 글 중복을 피하고 항목수를 억지로 채우지 마십시오. prepare_blogger_image_map.py로 .publishing-approvals/YYYY-MM-DD-<series>.blogger-image-map.json을 준비합니다. 이미지가 있으면 실제 Google/Blogger mapping 없이 준비 완료라고 하지 마십시오. 원고/이미지의 검토 버전을 동결한 뒤 Native Preview runbook에 따라 무쓰기 create계획부터 실행합니다.\nBlogger DRAFT 생성·대조 동안 UI/다른호스트/자동화가 쓰지 않는 유효한 단일 작성자 창이 확인돼야 합니다. 로컬잠금만으로 확인됐다고 하지 말고 미확인시 보류를 보고하십시오. 미해결 저널·동명글·map 미준비·버전충돌·이전 쓰기 불확실성은 보류하며 이름변경/다른경로로 우회하거나 맹목재시도하지 마십시오. 허용된 DRAFT전용 create --apply 한 번 후 정확 KO/EN ID를 readback하고 reconcile-create로 binding·완전저널을 대조/보존합니다. 기존 editedDRAFT를 덮어쓰지 마십시오.\nTelegram에 양쪽 관리자 편집 링크·원고경로/SHA·map경로/SHA/readiness·Blogger만 공개할 예약시각과 실제검증/미검증을 함께 안내합니다. 사용자 기기접근은 실제확인 전 미검증입니다. 사용자가 exact pair 공개를 승인하기 전 approval파일/LIVE공개는 금지합니다. 승인 답장 후 현재해시를 재확인하고 create_approval_record.py로 schema2 .publishing-approvals/YYYY-MM-DD-<series>.approval.json을 생성·검증합니다. 승인 문구는 실제답장원문, approved_at은실제시각, scheduled_publish_at은합의된발행일19시KST로 기록합니다. 주간은 검토당시 --weekly-evidence를 결합합니다. 승인후원고/map/evidence변경시새미리보기/재승인, 승인응답은조기공개권한이아닙니다. 기존발행job의실제next_run이대상일정을덮는지확인하되중복job은만들지마십시오.\n"
+    },
+    {
+      "id": "2b2c1a1e93a9",
+      "name": "주간 AI 한 접시 — Blogger 승인본 공개",
+      "schedule": "0 19 * * 6",
+      "series": "weekly-ai",
+      "role": "publish",
+      "timezone": "Asia/Seoul",
+      "workdir": "/root/oneplate-ai.github.io",
+      "attach_to_session": true,
+      "skills": [
+        "working-agreement",
+        "ai-content-publishing",
+        "blogger-content-operations"
+      ],
+      "prompt": "현재 작업 series=weekly-ai, role=publish입니다.\n토요일19시주간공개,발행일은실제KST당일이며 주간근거는승인에결합된Blogger LIVE일간집합만사용합니다.\nAI 한 접시 Blogger 단독 운영입니다. 공개·미리보기 대상은 Blogger 하나이며 GitHub는 코드 보관용입니다. Pages production/Preview 배포, GitHub 원격 읽기/쓰기·빌드·sitemap·채널간 일치 검사·Pages URL 확인을 실행하지 마십시오.\n먼저 /root/.hermes/work-records/INDEX.md, /root/oneplate-ai.github.io/PUBLISHING_RULES.md, /root/oneplate-ai.github.io/docs/BLOGGER_ONLY_PUBLICATION.md 및 /root/workspaces/oneplate-ai.github.io/docs/BLOGGER_NATIVE_PREVIEW_RUNBOOK.md를 읽습니다. 원고 root=/root/oneplate-ai.github.io, 코드=/root/workspaces/oneplate-ai.github.io/scripts. 실제 KST와 exact series/date/원고·이미지맵을 확인합니다. 새 유료서비스·테마/메뉴·인증/계정/DNS·다른 글 수정·자동삭제는 금지합니다. 토큰·credential·비밀 preview 렌더URL을 출력/전달하지 마십시오. 원래 Telegram 대화와 후속 응답 연결은 보존합니다.\n공개 직전 실제 KST와 exact 해당 회차의 승인파일/원고/이미지맵 해시, 기존실행/저널 및 Blogger상태를 확인합니다. 새원고·승인·map을 만들어 통과시키거나 전날글로 대체하지 마십시오. 무쓰기계획 명령:\npython3 /root/workspaces/oneplate-ai.github.io/scripts/blogger_channel_release.py --root /root/oneplate-ai.github.io --series <series> --date <발행일> --image-urls /root/oneplate-ai.github.io/.publishing-approvals/<발행일>-<series>.blogger-image-map.json\n승인없음·해시/제목/ID/binding/본문/라벨/중복/저널/weekly evidence 충돌 또는 예약시각 전이면 공개하지 말고 정확한 이유를 보고합니다. 공개승인/시각/단일작성자 조건과정확pair계획을확인한경우에만같은명령에--apply를추가합니다. 다른generic발행명령으로안전게이트를우회하지마십시오. 동일LIVE는무변경, editedDRAFT/다른LIVE는보존하고보류합니다. 외부요청은원자적이지않으므로partial/uncertain시성공·시도ID와단계를보존하고API재조회전재시도하지마십시오.\n양쪽언어의freshAPI LIVE/정확본문·labels·익명공개URL·이미지 및최종변경없음plan이확인돼야전체완료입니다. 한언어라도실패/미확정이면언어별상태/ID/URL/실패단계를보고합니다. scheduler ok·로컬검사·API응답·공개URL검증·Telegram전달을구분합니다. 과금/429실행실패가콘텐츠승인취소를뜻하지않으며늦은발행은원래시각승인과구분해재확인합니다.\n\n공개 성공 후 /root/workspaces/oneplate-ai.github.io/docs/BLOGGER_PUBLISH_JOURNAL_RUNBOOK.md에 따라 같은 잠금 안에서 승인해시·정확ID·fresh LIVE/API·익명URL·zero-change를 대조한 완전 성공 저널만 원본 보존 archive하고 후속 계획을 확인합니다. 불완전·불확실·손상 저널은 이동/삭제/자동 재시도하지 않습니다. reconcile-create를 공개저널에 사용하지 않습니다.\n"
+    }
+  ]
+}

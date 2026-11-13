@@ -1,4 +1,6 @@
-# Pages·Blogger 공통 예약 발행 계약
+# Pages·Blogger 공통 예약 발행 계약 (역사 참고)
+
+2026-11-13 Blogger 단독 전환 승인으로 현재 운영 계약은 [Blogger 단독 발행](BLOGGER_ONLY_PUBLICATION.md)으로 대체합니다. 아래 양채널/Pages Preview 절차는 과거 구현·복구 참고용이며 정기 작업에서 실행하지 않습니다. 실제 전환·Pages 공개 중단 여부는 운영 종료 기록으로 검증합니다.
 
 ## 1. 범위와 승인 경계
 

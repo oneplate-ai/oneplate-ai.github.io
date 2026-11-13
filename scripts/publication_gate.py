@@ -211,6 +211,12 @@ def validate_approval(path: Path, root: Path = ROOT, expected_series: str | None
     expected_unit = f"{series}-{data['drafts'][0]['date']}-bilingual"
     if data["publication_unit"] != expected_unit:
         raise GateError(f"publication_unit 불일치: expected={expected_unit}, actual={data['publication_unit']}")
+    if series == 'weekly-ai' and 'weekly_evidence' in data:
+        from weekly_source_evidence import validate_evidence
+        try:
+            validate_evidence(data['drafts'][0]['date'], data['weekly_evidence'])
+        except (ValueError, TypeError, KeyError) as error:
+            raise GateError(f'weekly_evidence invalid: {error}') from error
     return data
 
 
